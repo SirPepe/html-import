@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title></title>
+<style>
+  .test {
+    border: 4px solid black;
+    margin: 1em;
+    padding: 1em;
+  }
+  h2 {
+    margin-top: 0;
+  }
+</style>
+<script src="../html-import.js"></script>
+
+
+<div class="test">
+  <h2>Import everything</h2>
+  <html-import src="content.html"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Import only lorem</h2>
+  <html-import src="content.html#lorem"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Import only ipsum</h2>
+  <html-import src="content.html#ipsum"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Import file B which imports file C</h2>
+  <html-import src="b.html"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Promise resolution for nested imports (all paragraphs should be red)</h2>
+  <html-import src="a.html" id="test"></html-import>
+  <script>
+    var subject = document.querySelector("#test");
+    var parent = subject.parentNode;
+    subject.ready.then(function(){
+      var paragraphs = parent.querySelectorAll("p");
+      for(var paragraph of paragraphs){
+        paragraph.style.color = "red";
+      }
+    });
+  </script>
+</div>
