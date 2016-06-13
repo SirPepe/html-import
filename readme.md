@@ -11,7 +11,7 @@ Usage:
 <html-import src="content.html"></html-import>
 
 <!-- Import an element with a specific ID -->
-  <html-import src="content.html#foo"></html-import>
+<html-import src="content.html#foo"></html-import>
 ```
 
 JavaScript API:
