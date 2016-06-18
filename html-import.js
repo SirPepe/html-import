@@ -1,4 +1,4 @@
-window.HTMLImport = window.HTMLImport || (function(){
+window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   "use strict";
 
   function insertAfter(target, node){
