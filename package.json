@@ -1,12 +1,10 @@
 {
   "name": "html-import",
   "version": "1.0.0",
-  "description": "html-import",
-  "main": "dist/html-import.js",
+  "description": "If you know PHP, it's basically include() for HTML",
+  "main": "dist/html-import.min.js",
   "directories": {
     "test": "test"
-  },
-  "scripts": {
   },
   "repository": {
     "type": "git",
@@ -17,7 +15,5 @@
   "bugs": {
     "url": "https://github.com/SirPepe/html-import/issues"
   },
-  "homepage": "https://github.com/SirPepe/html-import#readme",
-  "devDependencies": {
-  }
+  "homepage": "https://github.com/SirPepe/html-import#readme"
 }
