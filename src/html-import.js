@@ -11,13 +11,13 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
 
   function fetchHtml(url){
     return window.fetch(url)
-      .then( response => response.text() )
+      .then( response => response.text() );
   }
 
   function extractElement(doc, id){
     const element = doc.getElementById(id);
     if(!element){
-      throw new Error(`Could not find element #${id} in ${html}`)
+      throw new Error(`Could not find element #${id} in ${html}`);
     }
     return document.importNode(element, true);
   }
