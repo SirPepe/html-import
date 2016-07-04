@@ -24,7 +24,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
 
   function extractBodyContent(doc){
     const fragment = document.createDocumentFragment();
-    for(const child of doc.body.children){
+    for(let child of doc.body.children){
       const node = document.importNode(child, true);
       fragment.appendChild(node);
     }
@@ -33,7 +33,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
 
   function waitForImports(importedImports){
     const promises = [];
-    for(const importElement of importedImports){
+    for(let importElement of importedImports){
       promises.push(importElement.ready);
     }
     return Promise.all(promises);
