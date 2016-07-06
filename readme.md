@@ -14,6 +14,9 @@ Usage:
 <html-import src="content.html#foo"></html-import>
 ```
 
+If a template element is imported by its ID its content will be added to the
+page, not the template element itself.
+
 JavaScript API:
 
 ```js

@@ -39,6 +39,12 @@
 
 
 <div class="test">
+  <h2>Import a &lt;template&gt; element's content if referenced by ID</h2>
+  <html-import src="template.html#TheTemplate"></html-import>
+</div>
+
+
+<div class="test">
   <h2>Promise resolution for nested imports (all paragraphs should be red)</h2>
   <html-import src="a.html" id="test"></html-import>
   <script>

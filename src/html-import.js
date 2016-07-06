@@ -19,12 +19,19 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
     if(!element){
       throw new Error(`Could not find element #${id} in ${html}`);
     }
+    if(Object.prototype.toString.call(element) === "[object HTMLTemplateElement]"){
+      return importChildren(element.content);
+    }
     return document.importNode(element, true);
   }
 
   function extractBodyContent(doc){
+    return importChildren(doc.body);
+  }
+
+  function importChildren(sourceElement){
     const fragment = document.createDocumentFragment();
-    for(let child of doc.body.children){
+    for(let child of sourceElement.children){
       const node = document.importNode(child, true);
       fragment.appendChild(node);
     }
