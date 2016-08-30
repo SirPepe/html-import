@@ -1,6 +1,12 @@
 window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   "use strict";
 
+  function resolveAsap(value){
+    return new Promise(function(resolve){
+      setTimeout(resolve, 0);
+    });
+  }
+
   function insertAfter(target, node){
     return target.parentNode.insertBefore(node, target.nextSibling);
   }
@@ -41,7 +47,11 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   function waitForImports(importedImports){
     const promises = [];
     for(let importElement of importedImports){
-      promises.push(importElement.ready);
+      // Wait for the current stack to clear before reporting "ready", so
+      // that polyfilled custom elements can initialize - otherwise
+      // importElement.ready would not be ready
+      const waiting = resolveAsap().then( () => importElement.ready );
+      promises.push(waiting);
     }
     return Promise.all(promises);
   }
