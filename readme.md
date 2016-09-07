@@ -1,7 +1,8 @@
 html-import
 ===========
 
-If you know PHP, it's basically `include()` for HTML as a custom element.
+Custom element for importing HTML documents (or parts of documents) into other
+documents. If you know PHP, it's basically client side `include()`.
 
 Usage:
 
@@ -14,17 +15,22 @@ Usage:
 <html-import src="content.html#foo"></html-import>
 ```
 
-If a template element is imported by its ID its content will be added to the
+If a template element is imported by its ID, *its content* will be added to the
 page, not the template element itself.
 
 JavaScript API:
 
 ```js
-var el = document.querySelector("html-import#foo");
+var el = document.querySelector("html-import.myImport");
 el.ready.then(function(content){
   // "content" is the imported node or the imported
   // nodes in a DocumentFragment
 });
 ```
 
-Imports in imports work (in Chrome, just like regular imports).
+Notable stuff that works:
+
+ * Imports in other imports
+ * Scripts (will be executed asynchronously)
+
+Tested in Chrome and (using the [Polyfill](https://github.com/WebReflection/document-register-element) for `document-register-element`) in Firefox.
