@@ -3,9 +3,9 @@
 <title></title>
 <style>
   .test {
-    border: 4px solid black;
+    border: 2px solid black;
     margin: 0.5em;
-    padding: 0.5em;
+    padding: 0.25em 0.5em;
   }
   h2 {
     margin-top: 0;
@@ -43,6 +43,24 @@
 <div class="test">
   <h2>Import a &lt;template&gt; element's content if referenced by ID</h2>
   <html-import src="template.html#TheTemplate"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Scripts in imported files should run</h2>
+  <html-import src="script.html"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>External scripts in imported files should run</h2>
+  <html-import src="external-script.html"></html-import>
+</div>
+
+
+<div class="test">
+  <h2>Scripts in imported files in imported files should run</h2>
+  <html-import src="import-script.html"></html-import>
 </div>
 
 

@@ -7,6 +7,38 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
     });
   }
 
+  function isScript(node){
+    return Object.prototype.toString.call(node) === "[object HTMLScriptElement]";
+  }
+
+  function isTemplate(node){
+    return Object.prototype.toString.call(node) === "[object HTMLTemplateElement]";
+  }
+
+  // This whole dance around scripts is nessercary because Firefox treats
+  // scripts that come from other documents as tainted and won't run them. So
+  // we have to clone the scripts and copy the original's content and/or
+  // href values over to the clones
+  function runScripts(node, parent){
+    if(isScript(node)){
+      runScript(node, parent);
+    } else {
+      for(let child of node.children){
+        runScripts(child, node);
+      }
+    }
+  }
+
+  function runScript(script, parent){
+    const clone = document.createElement("script");
+    insertAfter(script, clone);
+    clone.text = script.text;
+    if(script.src){
+      clone.src = script.src;
+    }
+    parent.removeChild(script);
+  }
+
   function insertAfter(target, node){
     return target.parentNode.insertBefore(node, target.nextSibling);
   }
@@ -25,7 +57,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
     if(!element){
       throw new Error(`Could not find element #${id} in ${html}`);
     }
-    if(Object.prototype.toString.call(element) === "[object HTMLTemplateElement]"){
+    if(isTemplate(element)){
       return importChildren(element.content);
     }
     return document.importNode(element, true);
@@ -76,6 +108,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
             .then( html => extractContent(html, id) )
             .then( content => {
               var importedImports = content.querySelectorAll("html-import");
+              runScripts(content, this);
               insertAfter(this, content);
               return waitForImports(importedImports);
             });

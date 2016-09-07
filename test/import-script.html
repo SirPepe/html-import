@@ -1,0 +1,13 @@
+<div>
+	<p class="scripting">
+		This should be red!
+	</p>
+	<script>
+		document
+			.currentScript
+			.parentElement
+			.querySelector("p.scripting").style.color = "red";
+		console.count("Script inside the importing importing an import with a script running");
+	</script>
+</div>
+<html-import src="script.html"></html-import>

@@ -1,0 +1,12 @@
+<div>
+	<p class="scripting">
+		This should be green!
+	</p>
+	<script>
+		document
+			.currentScript
+			.parentElement
+			.querySelector("p.scripting").style.color = "green";
+		console.count("Script inside an import with a script running");
+	</script>
+</div>
