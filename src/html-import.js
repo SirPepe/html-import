@@ -53,7 +53,10 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   }
 
   function extractElement(doc, id){
-    const element = doc.getElementById(id);
+    let element = doc.getElementById(id);
+    if(!element){
+      element = extractFromTemplates(doc, id);
+    }
     if(!element){
       throw new Error(`Could not find element #${id}`);
     }
@@ -61,6 +64,16 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
       return importChildren(element.content);
     }
     return document.importNode(element, true);
+  }
+
+  function extractFromTemplates(doc, id){
+    const templates = doc.querySelectorAll("template");
+    for(let template of templates) {
+      const element = template.content.getElementById(id);
+      if(element){
+        return element;
+      }
+    }
   }
 
   function extractBodyContent(doc){
