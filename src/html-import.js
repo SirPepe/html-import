@@ -55,7 +55,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   function extractElement(doc, id){
     const element = doc.getElementById(id);
     if(!element){
-      throw new Error(`Could not find element #${id} in ${html}`);
+      throw new Error(`Could not find element #${id}`);
     }
     if(isTemplate(element)){
       return importChildren(element.content);
