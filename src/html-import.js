@@ -116,15 +116,19 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
       attachedCallback: {
         value: function(){
           const src = this.getAttribute("src");
-          const id = getHash(src);
-          this.ready = fetchHtml(src)
-            .then( html => extractContent(html, id) )
-            .then( content => {
-              var importedImports = content.querySelectorAll("html-import");
-              runScripts(content, this);
-              insertAfter(this, content);
-              return waitForImports(importedImports);
-            });
+          if (!src) {
+            this.ready = Promise.reject("src attribute is empty");
+          } else {
+            const id = getHash(src);
+            this.ready = fetchHtml(src)
+              .then( html => extractContent(html, id) )
+              .then( content => {
+                var importedImports = content.querySelectorAll("html-import");
+                runScripts(content, this);
+                insertAfter(this, content);
+                return waitForImports(importedImports);
+              });
+          }
         }
       }
     })

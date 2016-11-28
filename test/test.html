@@ -10,6 +10,14 @@
   h2 {
     margin-top: 0;
   }
+  .ok::after {
+    content: "✔";
+    color: green;
+  }
+  .fail::after {
+    content: "✖";
+    color: red;
+  }
 </style>
 <!-- Custom Elements Polyfill -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/document-register-element/1.0.7/document-register-element.js"></script>
@@ -72,15 +80,32 @@
 
 <div class="test">
   <h2>Promise resolution for nested imports (all paragraphs should be red)</h2>
-  <html-import src="a.html" id="test"></html-import>
+  <html-import src="a.html" class="resolveOnAllImported"></html-import>
   <script>
-    var subject = document.querySelector("#test");
-    var parent = subject.parentNode;
-    subject.ready.then(function(){
-      var paragraphs = parent.querySelectorAll("p");
-      for(var paragraph of paragraphs){
-        paragraph.style.color = "red";
-      }
-    });
+    (function(){
+      var test = document.currentScript.parentElement;
+      var subject = test.querySelector(".resolveOnAllImported");
+      subject.ready.then(function(){
+        var paragraphs = test.querySelectorAll("p");
+        for(var paragraph of paragraphs){
+          paragraph.style.color = "red";
+        }
+      });
+    })();
+  </script>
+</div>
+
+
+<div class="test">
+  <h2 class="rejectOnEmptyReport">This is not importing anything, so the promise should be rejected</h2>
+  <html-import src="" class="rejectOnEmptyImport"></html-import>
+  <script>
+    (function(){
+      var test = document.currentScript.parentElement;
+      var subject = test.querySelector(".rejectOnEmptyImport");
+      subject.ready
+        .then( () => "fail", () => "ok" )
+        .then( (state) => document.querySelector(".rejectOnEmptyReport").classList.add(state) )
+    })();
   </script>
 </div>
