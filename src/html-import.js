@@ -1,6 +1,8 @@
 window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
   "use strict";
 
+  const cache = new Map();
+
   function resolveAsap(value){
     return new Promise(function(resolve){
       setTimeout(resolve, 0);
@@ -43,13 +45,24 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
     return target.parentNode.insertBefore(node, target.nextSibling);
   }
 
+  function removeHash(url){
+    return url.split("#")[0];
+  }
+
   function getHash(url){
     return url.split("#")[1];
   }
 
   function fetchHtml(url){
-    return window.fetch(url)
-      .then( response => response.text() );
+    url = removeHash(url);
+    const fromCache = cache.get(url);
+    if (fromCache) {
+      return fromCache;
+    } else {
+      const promise = window.fetch(url).then( response => response.text() );
+      cache.set(url, promise);
+      return promise;
+    }
   }
 
   function extractElement(doc, id){
