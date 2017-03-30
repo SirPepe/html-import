@@ -3,17 +3,22 @@
   "version": "1.0.0",
   "description": "If you know PHP, it's basically include() for HTML",
   "main": "dist/html-import.min.js",
+  "scripts": {
+    "build": "./node_modules/.bin/eslint src/html-import.js && ./node_modules/.bin/webpack"
+  },
   "directories": {
     "test": "test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SirPepe/html-import.git"
-  },
+  "repository": "git+https://github.com/SirPepe/html-import.git",
   "author": "peter@peterkroener.de",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/SirPepe/html-import/issues"
   },
-  "homepage": "https://github.com/SirPepe/html-import#readme"
+  "homepage": "https://github.com/SirPepe/html-import#readme",
+  "devDependencies": {
+    "babili-webpack-plugin": "^0.0.11",
+    "eslint": "^3.18.0",
+    "webpack": "^2.3.2"
+  }
 }

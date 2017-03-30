@@ -3,7 +3,7 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
 
   const cache = new Map();
 
-  function resolveAsap(value){
+  function resolveAsap(){
     return new Promise(function(resolve){
       setTimeout(resolve, 0);
     });
