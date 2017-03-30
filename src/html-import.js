@@ -1,4 +1,4 @@
-window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
+window.HTMLImportElement = window.HTMLImportElement || (function(){
   "use strict";
 
   const cache = new Map();
@@ -124,27 +124,41 @@ window.HTMLImportHtmlElement = window.HTMLImportHtmlElement || (function(){
     }
   }
 
-  return document.registerElement('html-import', {
-    prototype: Object.create(window.HTMLElement.prototype, {
-      attachedCallback: {
-        value: function(){
-          const src = this.getAttribute("src");
-          if (!src) {
-            this.ready = Promise.reject("src attribute is empty");
-          } else {
-            const id = getHash(src);
-            this.ready = fetchHtml(src)
-              .then( html => extractContent(html, id) )
-              .then( content => {
-                var importedImports = content.querySelectorAll("html-import");
-                runScripts(content, this);
-                insertAfter(this, content);
-                return waitForImports(importedImports);
-              });
-          }
-        }
+  const RESOLVE_KEY = Symbol();
+  const REJECT_KEY  = Symbol();
+
+  class HTMLImportElement extends HTMLElement {
+
+    constructor (self) {
+      self = super(self);
+      self.ready = new Promise( (resolve, reject) => {
+        self[RESOLVE_KEY] = resolve;
+        self[REJECT_KEY]  = reject;
+      });
+      return self;
+    }
+
+    connectedCallback () {
+      const src = this.getAttribute("src");
+      if (!src) {
+        this[REJECT_KEY](new Error("src attribute is empty"));
+      } else {
+        const id = getHash(src);
+        this[RESOLVE_KEY](fetchHtml(src)
+          .then( html => extractContent(html, id) )
+          .then( content => {
+            var importedImports = content.querySelectorAll("html-import");
+            runScripts(content, this);
+            insertAfter(this, content);
+            return waitForImports(importedImports);
+          }));
       }
-    })
-  });
+    }
+
+  }
+
+  customElements.define("html-import", HTMLImportElement);
+
+  return HTMLImportElement;
 
 })();
