@@ -7,8 +7,8 @@ module.exports = function(config){
     frameworks: [ "mocha" ],
 
     files: [
-      { pattern: "./node_modules/document-register-element/build/document-register-element.js" },
-      { pattern: "./node_modules/document-register-element/build/innerHTML.js" },
+      { pattern: "./node_modules/document-register-element/build/document-register-element.max.js" },
+      { pattern: "./node_modules/document-register-element/build/innerHTML.max.js" },
       { pattern: "./src/html-import.js" },
       { pattern: "./test/test.js" },
       { pattern: "./test/*.html", watched: true, served:  true, included: false }

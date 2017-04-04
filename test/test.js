@@ -64,3 +64,27 @@ describe("Import single elements", function () {
   });
 
 });
+
+
+
+describe("Promises", function () {
+
+  describe("on procedurally created elements", function () {
+    it("should have a promise at .ready right from the start", function () {
+      this.el = new HTMLImportElement;
+      this.el.ready.should.be.a.Promise();
+    });
+  });
+
+  describe("on elements created by innerHTML", function () {
+    setup(function (fixture, done) {
+      innerHTML(fixture, "<html-import></html-import>");
+      done();
+    });
+    it("should have a promise at .ready right from the start", function () {
+      const el = this.fixture.querySelector("html-import");
+      el.ready.should.be.a.Promise();
+    });
+  });
+
+});
