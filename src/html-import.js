@@ -65,13 +65,13 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
-  function extractElement(doc, id){
+  function extractElement(doc, id, path){
     let element = doc.getElementById(id);
     if(!element){
       element = extractFromTemplates(doc, id);
     }
     if(!element){
-      throw new Error(`Could not find element #${id}`);
+      throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
     }
     if(isTemplate(element)){
       return importChildren(element.content);
@@ -114,11 +114,11 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     return Promise.all(promises);
   }
 
-  function extractContent(html, id){
+  function extractContent(html, id, path){
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     if(id){
-      return extractElement(doc, id);
+      return extractElement(doc, id, path);
     } else {
       return extractBodyContent(doc);
     }
@@ -145,7 +145,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       } else {
         const id = getHash(src);
         this[RESOLVE_KEY](fetchHtml(src)
-          .then( html => extractContent(html, id) )
+          .then( html => extractContent(html, id, src) )
           .then( content => {
             var importedImports = content.querySelectorAll("html-import");
             runScripts(content, this);
