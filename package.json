@@ -4,7 +4,8 @@
   "description": "If you know PHP, it's basically include() for HTML",
   "main": "dist/html-import.min.js",
   "scripts": {
-    "build": "./node_modules/.bin/eslint src/html-import.js && ./node_modules/.bin/webpack"
+    "build": "./node_modules/.bin/eslint src/html-import.js && ./node_modules/.bin/rollup -c",
+    "watch": "./node_modules/.bin/rollup -c -w"
   },
   "directories": {
     "test": "test"
@@ -20,9 +21,11 @@
     "babili-webpack-plugin": "^0.0.11",
     "eslint": "^3.18.0",
     "qunitjs": "^2.3.2",
-    "webpack": "^2.3.2"
+    "rollup": "^0.41.6",
+    "rollup-watch": "^3.2.2"
   },
   "dependencies": {
-    "document-register-element": "^1.4.1"
+    "document-register-element": "^1.4.1",
+    "rollup-plugin-babili": "^3.0.0"
   }
 }
