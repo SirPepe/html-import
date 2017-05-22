@@ -13,7 +13,7 @@ Notable features:
 
  * Nested imports
  * Importing single elements (`<html-import src="a.html#SomeId"></html-import>`)
- * Renaming importing single elements (`<html-import src="a.html#SomeId" as="SomethingElse></html-import>`)
+ * Renaming importing single elements (`<html-import src="a.html#SomeId" as="SomethingElse"></html-import>`)
  * Scripts in imported HTML files (will be executed asynchronously)
  * An in-memory cache prevents multiple downloads of the same file
 
