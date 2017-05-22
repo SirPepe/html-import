@@ -12,8 +12,10 @@ documents. If you know PHP, it's basically client side `include()`.
 Notable features:
 
  * Nested imports
+ * Importing single elements (`<html-import src="a.html#SomeId"></html-import>`)
+ * Renaming importing single elements (`<html-import src="a.html#SomeId" as="SomethingElse></html-import>`)
  * Scripts in imported HTML files (will be executed asynchronously)
- * An in-memory cache prevent multiple downloads of the same file
+ * An in-memory cache prevents multiple downloads of the same file
 
 Usage in HTML
 -------------
@@ -46,8 +48,10 @@ Result:
 You can also import single elements from a file:
 
 ```html
-<!-- Import an element with a specific ID -->
-<html-import src="content.html#foo"></html-import>
+<div class="wrapper">
+  <!-- Import an element with a specific ID -->
+  <html-import src="content.html#foo"></html-import>
+</div>
 ```
 
 Result:
@@ -56,6 +60,26 @@ Result:
 <div class="wrapper">
   <html-import src="content.html#foo"></html-import>
   <p id="foo">Lorem</p>
+</div>
+```
+
+Use the `as` attribute to change an element's ID after importing it. This might
+be useful if you want to import multiple instances of the same element into one
+page, but require IDs to remain unique:
+
+```html
+<div class="wrapper">
+  <!-- Import an element with a specific ID and rename it -->
+  <html-import src="content.html#foo" as="bar"></html-import>
+</div>
+```
+
+Result:
+
+```html
+<div class="wrapper">
+  <html-import src="content.html#foo"></html-import>
+  <p id="bar">Lorem</p>
 </div>
 ```
 
@@ -88,6 +112,9 @@ page, not the template element itself. If `content.html` looks like this...
 </div>
 ```
 
+Because template elements themselves do not get imported into the page, the
+`as` attribute does not work with templates.
+
 
 
 JavaScript API
@@ -115,6 +142,16 @@ el.ready
     // download failed, element not found etc.
   });
 ```
+
+The promise will be rejected (and the element will not import anything) if
+anything goes wrong. Things that might go wrong:
+
+* `src` attribute is missing or empty
+* `as` attribute has been defined by is empty
+* the url to load cannot be found
+* the requested element (specified by its ID) cannot be found in the imported document
+* an `as` attribute was specified but the url in `src` contains no fragment
+* an `as` attribute was specified but a template element was imported
 
 
 
