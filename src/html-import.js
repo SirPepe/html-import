@@ -1,3 +1,5 @@
+// @flow
+
 window.HTMLImportElement = window.HTMLImportElement || (function(){
   "use strict";
 
@@ -42,7 +44,9 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
   }
 
   function insertAfter(target, node){
-    return target.parentNode.insertBefore(node, target.nextSibling);
+    if (target.parentNode) {
+      return target.parentNode.insertBefore(node, target.nextSibling);
+    }
   }
 
   function removeHash(url){
@@ -73,7 +77,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     if(!element){
       throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
     }
-    if(isTemplate(element)){
+    if(element && isTemplate(element) && element.content){
       return importChildren(element.content);
     }
     return document.importNode(element, true);
@@ -94,8 +98,10 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
   }
 
   function importChildren(sourceElement){
+    if (!sourceElement) throw new Error("Missing sourceElement");
     const fragment = document.createDocumentFragment();
-    for(let child of sourceElement.children){
+    const children = sourceElement.children;
+    for(let child of children){
       const node = document.importNode(child, true);
       fragment.appendChild(node);
     }
