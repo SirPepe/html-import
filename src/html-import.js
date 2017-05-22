@@ -137,14 +137,39 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
+  const PROMISE_KEY = Symbol();
   const RESOLVE_KEY = Symbol();
   const REJECT_KEY  = Symbol();
 
   class HTMLImportElement extends HTMLElement {
 
+    get ready () {
+      return this[PROMISE_KEY];
+    }
+
+    set ready (x) {
+      return;
+    }
+
+    get src () {
+      return this.getAttribute("src");
+    }
+
+    set src (x) {
+      return;
+    }
+
+    get as () {
+      return this.getAttribute("as");
+    }
+
+    set as (x) {
+      return;
+    }
+
     constructor (self) {
       self = super(self);
-      self.ready = new Promise( (resolve, reject) => {
+      self[PROMISE_KEY] = new Promise( (resolve, reject) => {
         self[RESOLVE_KEY] = resolve;
         self[REJECT_KEY]  = reject;
       });

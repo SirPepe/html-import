@@ -63,6 +63,21 @@ setTimeout( () => {
 </script>
 
 
+<div class="fixture import-js-api">
+  <html-import src="content.html"></html-import>
+</div>
+<script>
+setTimeout( () => {
+  QUnit.test("Import element should have a js api where properties reflect attributes", function (assert) {
+    const subject = document.querySelector(".fixture.import-js-api html-import");
+    assert.equal(subject.src, subject.getAttribute("src"), "The 'src' attribute is reflected");
+    assert.equal(subject.as, subject.getAttribute("as"), "The 'as' attribute is reflected");
+    assert.ok(subject.ready, "The 'ready' property is present");
+  });
+}, 1000);
+</script>
+
+
 <div class="fixture import-nested">
   <html-import src="b.html"></html-import>
 </div>
