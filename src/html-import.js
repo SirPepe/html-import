@@ -5,17 +5,15 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
 
   const cache = new Map();
 
-  function resolveAsap(){
-    return new Promise(function(resolve){
-      setTimeout(resolve, 0);
-    });
+  function resolveAsap () {
+    return new Promise( (resolve) => setTimeout(resolve, 0) );
   }
 
-  function isScript(node){
+  function isScript (node) {
     return Object.prototype.toString.call(node) === "[object HTMLScriptElement]";
   }
 
-  function isTemplate(node){
+  function isTemplate (node) {
     return Object.prototype.toString.call(node) === "[object HTMLTemplateElement]";
   }
 
@@ -24,60 +22,60 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
   // we have to clone the scripts and copy the original's content and/or
   // href values over to the clones
   function runScripts(node, parent){
-    if(isScript(node)){
+    if (isScript(node)) {
       runScript(node, parent);
     } else {
-      for(let child of node.children){
+      for (let child of node.children) {
         runScripts(child, node);
       }
     }
   }
 
-  function runScript(script, parent){
+  function runScript (script, parent) {
     const clone = document.createElement("script");
     insertAfter(script, clone);
     clone.text = script.text;
-    if(script.src){
+    if (script.src) {
       clone.src = script.src;
     }
     parent.removeChild(script);
   }
 
-  function insertAfter(target, node){
+  function insertAfter (target, node) {
     if (target.parentNode) {
       return target.parentNode.insertBefore(node, target.nextSibling);
     }
   }
 
-  function removeHash(url){
+  function removeHash (url) {
     return url.split("#")[0];
   }
 
-  function getHash(url){
+  function getHash (url) {
     return url.split("#")[1];
   }
 
-  function fetchHtml(url){
+  function fetchHtml (url) {
     url = removeHash(url);
     const fromCache = cache.get(url);
     if (fromCache) {
       return fromCache;
     } else {
-      const promise = window.fetch(url).then( response => response.text() );
+      const promise = window.fetch(url).then( (response) => response.text() );
       cache.set(url, promise);
       return promise;
     }
   }
 
-  function extractElement(doc, id, newId, path){
+  function extractElement (doc, id, newId, path) {
     let element = doc.getElementById(id);
-    if(!element){
+    if (!element) {
       element = extractFromTemplates(doc, id);
     }
-    if(!element){
+    if (!element) {
       throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
     }
-    if(element && isTemplate(element) && element.content){
+    if (element && isTemplate(element) && element.content) {
       if (newId) {
         throw new Error(`Imported element #${id} and found it to be a template, which cannot be renamed to ${newId} as specified in the 'as' attribute`);
       }
@@ -90,34 +88,36 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     return document.importNode(element, true);
   }
 
-  function extractFromTemplates(doc, id){
+  function extractFromTemplates (doc, id) {
     const templates = doc.querySelectorAll("template");
-    for(let template of templates) {
+    for (let template of templates) {
       const element = template.content.getElementById(id);
-      if(element){
+      if (element) {
         return element;
       }
     }
   }
 
-  function extractBodyContent(doc){
+  function extractBodyContent (doc) {
     return importChildren(doc.body);
   }
 
-  function importChildren(sourceElement){
-    if (!sourceElement) throw new Error("Missing sourceElement");
+  function importChildren (sourceElement) {
+    if (!sourceElement) {
+      throw new Error("Missing sourceElement");
+    }
     const fragment = document.createDocumentFragment();
     const children = sourceElement.children;
-    for(let child of children){
+    for (let child of children) {
       const node = document.importNode(child, true);
       fragment.appendChild(node);
     }
     return fragment;
   }
 
-  function waitForImports(importedImports){
+  function waitForImports (importedImports) {
     const promises = [];
-    for(let importElement of importedImports){
+    for (let importElement of importedImports) {
       // Wait for the current stack to clear before reporting "ready", so
       // that polyfilled custom elements can initialize - otherwise
       // importElement.ready would not be ready
@@ -127,10 +127,10 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     return Promise.all(promises);
   }
 
-  function extractContent(html, id, newId, path){
+  function extractContent (html, id, newId, path) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    if(id){
+    if (id) {
       return extractElement(doc, id, newId, path);
     } else {
       return extractBodyContent(doc);
@@ -170,8 +170,8 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
         return this[REJECT_KEY](new Error("The 'as' attribute was defined, but src attribute is not targeting an element"));
       }
       this[RESOLVE_KEY](fetchHtml(src)
-        .then( html => extractContent(html, id, newId, src) )
-        .then( content => {
+        .then( (html) => extractContent(html, id, newId, src) )
+        .then( (content) => {
           var importedImports = content.querySelectorAll("html-import");
           runScripts(content, this);
           insertAfter(this, content);
