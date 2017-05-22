@@ -69,7 +69,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
-  function extractElement(doc, id, path){
+  function extractElement(doc, id, newId, path){
     let element = doc.getElementById(id);
     if(!element){
       element = extractFromTemplates(doc, id);
@@ -78,7 +78,14 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
     }
     if(element && isTemplate(element) && element.content){
+      if (newId) {
+        throw new Error(`Imported element #${id} and found it to be a template, which cannot be renamed to ${newId} as specified in the 'as' attribute`);
+      }
       return importChildren(element.content);
+    }
+    if (newId) {
+      element = element.cloneNode(true);
+      element.id = newId;
     }
     return document.importNode(element, true);
   }
@@ -120,11 +127,11 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     return Promise.all(promises);
   }
 
-  function extractContent(html, id, path){
+  function extractContent(html, id, newId, path){
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     if(id){
-      return extractElement(doc, id, path);
+      return extractElement(doc, id, newId, path);
     } else {
       return extractBodyContent(doc);
     }
@@ -145,20 +152,31 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
 
     connectedCallback () {
-      const src = this.getAttribute("src");
-      if (!src) {
-        this[REJECT_KEY](new Error("src attribute is empty"));
-      } else {
-        const id = getHash(src);
-        this[RESOLVE_KEY](fetchHtml(src)
-          .then( html => extractContent(html, id, src) )
-          .then( content => {
-            var importedImports = content.querySelectorAll("html-import");
-            runScripts(content, this);
-            insertAfter(this, content);
-            return waitForImports(importedImports);
-          }));
+      const hasSrc = this.hasAttribute("src");
+      if (!hasSrc) {
+        return this[REJECT_KEY](new Error("The 'src' attribute is required"));
       }
+      const src   = this.getAttribute("src");
+      if (!src) {
+        return this[REJECT_KEY](new Error("The 'src' attribute is empty"));
+      }
+      const hasAs = this.hasAttribute("as");
+      const newId = this.getAttribute("as");
+      if (hasAs && !newId) {
+        return this[REJECT_KEY](new Error("The 'as' attribute was defined, but it is empty"));
+      }
+      const id = getHash(src);
+      if (newId && !id) {
+        return this[REJECT_KEY](new Error("The 'as' attribute was defined, but src attribute is not targeting an element"));
+      }
+      this[RESOLVE_KEY](fetchHtml(src)
+        .then( html => extractContent(html, id, newId, src) )
+        .then( content => {
+          var importedImports = content.querySelectorAll("html-import");
+          runScripts(content, this);
+          insertAfter(this, content);
+          return waitForImports(importedImports);
+        }));
     }
 
   }
