@@ -67,23 +67,28 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
-  function extractElement (doc, id, newId, path) {
+  function extractElement (doc, id, newId, eraseId, path) {
+    // Try to extract the element with the given id from the document
     let element = doc.getElementById(id);
+    // If the element is not in the document, maybe it is in a template element?
     if (!element) {
       element = extractFromTemplates(doc, id);
     }
+    // I guess not!
     if (!element) {
       throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
     }
-    if (element && isTemplate(element) && element.content) {
-      if (newId) {
-        throw new Error(`Imported element #${id} and found it to be a template, which cannot be renamed to ${newId} as specified in the 'as' attribute`);
-      }
+    // If the element is a template, return its content
+    // Renaming/erasing IDs does not apply in this case
+    if (isTemplate(element) && element.content) {
       return importChildren(element.content);
     }
+    // If the element is not a template change/erase the id and import it!
+    element = element.cloneNode(true);
     if (newId) {
-      element = element.cloneNode(true);
       element.id = newId;
+    } else if (eraseId === true) {
+      element.removeAttribute("id");
     }
     return document.importNode(element, true);
   }
@@ -185,17 +190,11 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       if (!src) {
         return this[REJECT_KEY](new Error("The 'src' attribute is empty"));
       }
-      const hasAs = this.hasAttribute("as");
-      const newId = this.getAttribute("as");
-      if (hasAs && !newId) {
-        return this[REJECT_KEY](new Error("The 'as' attribute was defined, but it is empty"));
-      }
       const id = getHash(src);
-      if (newId && !id) {
-        return this[REJECT_KEY](new Error("The 'as' attribute was defined, but src attribute is not targeting an element"));
-      }
+      const newId = this.getAttribute("as");
+      const eraseId = newId === "";
       this[RESOLVE_KEY](fetchHtml(src)
-        .then( (html) => extractContent(html, id, newId, src) )
+        .then( (html) => extractContent(html, id, newId, eraseId, src) )
         .then( (content) => {
           var importedImports = content.querySelectorAll("html-import");
           runScripts(content, this);

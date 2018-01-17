@@ -14,6 +14,7 @@ Notable features:
  * Nested imports
  * Importing single elements (`<html-import src="a.html#SomeId"></html-import>`)
  * Renaming importing single elements (`<html-import src="a.html#SomeId" as="SomethingElse"></html-import>`)
+ * Erasing the ids from imported elements by leaving the `as` attribute empty (`<html-import src="a.html#SomeId" as=""></html-import>`)
  * Scripts in imported HTML files (will be executed asynchronously)
  * An in-memory cache prevents multiple downloads of the same file
 
@@ -83,6 +84,25 @@ Result:
 </div>
 ```
 
+If you want to erase the ID when importing the element, just add an empty `as`
+attribute:
+
+```html
+<div class="wrapper">
+  <!-- Import an element with a specific ID and erase the id when importing -->
+  <html-import src="content.html#foo" as=""></html-import>
+</div>
+```
+
+Result:
+
+```html
+<div class="wrapper">
+  <html-import src="content.html#foo"></html-import>
+  <p>Lorem</p>
+</div>
+```
+
 If a template element is imported by its ID, *its content* will be added to the
 page, not the template element itself. If `content.html` looks like this...
 
@@ -113,7 +133,8 @@ page, not the template element itself. If `content.html` looks like this...
 ```
 
 Because template elements themselves do not get imported into the page, the
-`as` attribute does not work with templates.
+`as` attribute does not work when targeting templates (the `as` attribute is
+silently ignored).
 
 
 
@@ -144,14 +165,11 @@ el.ready
 ```
 
 The promise will be rejected (and the element will not import anything) if
-anything goes wrong. Things that might go wrong:
+anything mayor goes wrong. Things that might go wrong:
 
-* `src` attribute is missing or empty
-* `as` attribute has been defined by is empty
-* the url to load cannot be found
-* the requested element (specified by its ID) cannot be found in the imported document
-* an `as` attribute was specified but the url in `src` contains no fragment
-* an `as` attribute was specified but a template element was imported
+ * the `src` attribute is missing or empty
+ * the url to load cannot be found
+ * the requested element (specified by its ID) cannot be found in the imported document
 
 
 
@@ -159,4 +177,4 @@ Caveats
 -------
 
 * Because I'm a lazy linux-using slob this element has so far only been tested in Chrome and Firefox.
-* If you use the [Polyfill](https://github.com/WebReflection/document-register-element) for `document-register-element`) (which you have to use if you want to support Firefox) you get a bunch of additional caveats (eg. when using innerHTML) for free.
+* If you use the [Polyfill](https://github.com/WebReflection/document-register-element) for `document-register-element`) (which you have to use if you want to support older browsers) you get a bunch of additional caveats (eg. when using innerHTML) for free.

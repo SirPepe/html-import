@@ -242,27 +242,6 @@ QUnit.test("Promises for import elements that are not importing anything should 
 </script>
 
 
-<div class="fixture import-as-attribute-empty">
-  <html-import src="content.html" as=""></html-import>
-</div>
-<script>
-QUnit.test("Promise resolution for defined but empty 'as' attributes", function (assert) {
-  const done = assert.async();
-  const fixture  = document.querySelector(".fixture.import-as-attribute-empty");
-  const subject  = fixture.querySelector("html-import");
-  const expected = `<html-import src="content.html" as=""></html-import>`;
-  const actual   = fixture.innerHTML.trim();
-  subject.ready
-    .then( () => "resolved", () => "rejected")
-    .then( (result) => {
-      assert.ok(result, "rejected", "The promise was rejected");
-      assert.equal(actual, expected, "Nothing was imported");
-      done();
-    });
-});
-</script>
-
-
 <div class="fixture import-as-attribute">
   <html-import src="content.html#lorem" as="ipsum"></html-import>
 </div>
@@ -279,21 +258,53 @@ setTimeout( () => {
 </script>
 
 
+<div class="fixture as-attribute-but-no-id">
+  <html-import src="content.html" as="foo"></html-import>
+</div>
+<script>
+setTimeout( () => {
+  QUnit.test("Importing content and using the 'as' attribute when there's no ID involved", function (assert) {
+    const fixture  = document.querySelector(".fixture.as-attribute-but-no-id");
+    const subject  = fixture.querySelector("html-import");
+    const expected = `<p id="lorem">Lorem</p><p id="ipsum">Ipsum</p>`;
+    const actual   = fixture.innerHTML.trim();
+    assert.ok(actual.endsWith(expected), "The content gets added and the as attribute is ignored");
+  });
+}, 1000);
+</script>
+
+
+<div class="fixture import-as-attribute-empty">
+  <html-import src="content.html#lorem" as=""></html-import>
+</div>
+<script>
+setTimeout( () => {
+  QUnit.test("Importing content and erasing the id using the 'as' attribute", function (assert) {
+    const fixture  = document.querySelector(".fixture.import-as-attribute-empty");
+    const subject  = fixture.querySelector("html-import");
+    const expected = `<p>Lorem</p>`;
+    const actual   = fixture.innerHTML.trim();
+    assert.ok(actual.endsWith(expected), "The content gets added and the id is erased");
+  });
+}, 1000);
+</script>
+
+
 <div class="fixture import-as-attribute-template">
   <html-import src="template.html#TheTemplate" as="SomethingElse"></html-import>
 </div>
 <script>
-QUnit.test("Promise resolution for defined template imports with 'as' attribute", function (assert) {
+QUnit.test("Ignore the as attribute when importing templates", function (assert) {
   const done = assert.async();
   const fixture  = document.querySelector(".fixture.import-as-attribute-template");
   const subject  = fixture.querySelector("html-import");
-  const expected = `<html-import src="template.html#TheTemplate" as="SomethingElse"></html-import>`;
+  const minimum  = `<html-import src="template.html#TheTemplate" as="SomethingElse"></html-import>`;
   const actual   = fixture.innerHTML.trim();
   subject.ready
     .then( () => "resolved", () => "rejected")
     .then( (result) => {
-      assert.ok(result, "rejected", "The promise was rejected");
-      assert.equal(actual, expected, "Nothing was imported");
+      assert.ok(result, "resolved", "The promise was rejected");
+      assert.notEqual(actual, minimum, "Stuff was imported");
       done();
     });
 });
