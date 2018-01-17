@@ -186,7 +186,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       if (!hasSrc) {
         return this[REJECT_KEY](new Error("The 'src' attribute is required"));
       }
-      const src   = this.getAttribute("src");
+      const src = this.getAttribute("src");
       if (!src) {
         return this[REJECT_KEY](new Error("The 'src' attribute is empty"));
       }
