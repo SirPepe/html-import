@@ -303,7 +303,7 @@ QUnit.test("Ignore the as attribute when importing templates", function (assert)
   subject.ready
     .then( () => "resolved", () => "rejected")
     .then( (result) => {
-      assert.ok(result, "resolved", "The promise was rejected");
+      assert.ok(result, "resolved", "The promise was resolved");
       assert.notEqual(actual, minimum, "Stuff was imported");
       done();
     });
