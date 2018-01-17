@@ -67,7 +67,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
-  function extractElement (doc, id, newId, eraseId, path) {
+  function extractElement (doc, id, newId, eraseId, selector, path) {
     // Try to extract the element with the given id from the document
     let element = doc.getElementById(id);
     // If the element is not in the document, maybe it is in a template element?
@@ -77,6 +77,10 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     // I guess not!
     if (!element) {
       throw new Error(`Could not find element #${id} in ${removeHash(path)}`);
+    }
+    // Also fail if the element does not match the selector (if any)
+    if (selector && !element.matches(selector)) {
+      throw new Error(`Could not find element #${id} matching selector "${selector}" in ${removeHash(path)}`);
     }
     // If the element is a template, return its content
     // Renaming/erasing IDs does not apply in this case
@@ -103,19 +107,21 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     }
   }
 
-  function extractBodyContent (doc) {
-    return importChildren(doc.body);
+  function extractBodyContent (doc, selector) {
+    return importChildren(doc.body, selector);
   }
 
-  function importChildren (sourceElement) {
+  function importChildren (sourceElement, selector) {
     if (!sourceElement) {
       throw new Error("Missing sourceElement");
     }
     const fragment = document.createDocumentFragment();
     const children = sourceElement.children;
     for (let child of children) {
-      const node = document.importNode(child, true);
-      fragment.appendChild(node);
+      if (!selector || child.matches(selector)) {
+        const node = document.importNode(child, true);
+        fragment.appendChild(node);
+      }
     }
     return fragment;
   }
@@ -132,13 +138,13 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
     return Promise.all(promises);
   }
 
-  function extractContent (html, id, newId, path) {
+  function extractContent (html, id, newId, eraseId, selector, path) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     if (id) {
-      return extractElement(doc, id, newId, path);
+      return extractElement(doc, id, newId, eraseId, selector, path);
     } else {
-      return extractBodyContent(doc);
+      return extractBodyContent(doc, selector);
     }
   }
 
@@ -172,6 +178,14 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       return;
     }
 
+    get selector () {
+      return this.getAttribute("selector");
+    }
+
+    set selector (x) {
+      return;
+    }
+
     constructor (self) {
       self = super(self);
       self[PROMISE_KEY] = new Promise( (resolve, reject) => {
@@ -194,7 +208,7 @@ window.HTMLImportElement = window.HTMLImportElement || (function(){
       const newId = this.getAttribute("as");
       const eraseId = newId === "";
       this[RESOLVE_KEY](fetchHtml(src)
-        .then( (html) => extractContent(html, id, newId, eraseId, src) )
+        .then( (html) => extractContent(html, id, newId, eraseId, this.selector, src) )
         .then( (content) => {
           var importedImports = content.querySelectorAll("html-import");
           runScripts(content, this);

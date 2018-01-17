@@ -63,8 +63,84 @@ setTimeout( () => {
 </script>
 
 
+<div class="fixture import-by-selector-single">
+  <html-import src="mixedContent.html" selector=".bar"></html-import>
+</div>
+<script>
+setTimeout( () => {
+  QUnit.test("Import only selected elements from a file (one element)", function (assert) {
+    const fixture = document.querySelector(".fixture.import-by-selector-single");
+    const expected = `<p class="foo bar">Ipsum</p>`;
+    const unexpected = `<p class="foo">Lorem</p>`;
+    const actual = fixture.innerHTML.trim();
+    assert.ok(actual.includes(expected), "Element with class bar gets added");
+    assert.notOk(actual.includes(unexpected), "Element with class foo does not get added");
+  });
+}, 1000);
+</script>
+
+
+<div class="fixture import-by-selector-multi">
+  <html-import src="mixedContent.html" selector=".foo"></html-import>
+</div>
+<script>
+setTimeout( () => {
+  QUnit.test("Import only selected elements from a file (multiple element)", function (assert) {
+    const fixture = document.querySelector(".fixture.import-by-selector-multi");
+    const expected1 = `<p class="foo bar">Ipsum</p>`;
+    const expected2 = `<p class="foo">Lorem</p>`;
+    const actual = fixture.innerHTML.trim();
+    assert.ok(actual.includes(expected1), "Element 1 with class foo gets added");
+    assert.ok(actual.includes(expected2), "Element 2 with class foo gets added");
+  });
+}, 1000);
+</script>
+
+
+<div class="fixture import-by-selector-include">
+  <html-import src="content.html#ipsum" selector="p"></html-import>
+</div>
+<script>
+QUnit.test("Do import an element by id if it does match the selector", function (assert) {
+  const done = assert.async();
+  const fixture  = document.querySelector(".fixture.import-by-selector-include");
+  const subject  = fixture.querySelector("html-import");
+  const expected = `<p id="ipsum">Ipsum</p>`;
+  const actual   = fixture.innerHTML.trim();
+  subject.ready
+    .then( () => "resolved", () => "rejected")
+    .then( (result) => {
+      assert.ok(result, "resolved", "The promise was resolved");
+      assert.ok(actual.endsWith(expected), "The element was imported");
+      done();
+    });
+});
+</script>
+
+
+<div class="fixture import-by-selector-exclude">
+  <html-import src="content.html#ipsum" selector="div"></html-import>
+</div>
+<script>
+QUnit.test("Do not import an element by id if it does not match the selector", function (assert) {
+  const done = assert.async();
+  const fixture  = document.querySelector(".fixture.import-by-selector-exclude");
+  const subject  = fixture.querySelector("html-import");
+  const expected = `<html-import src="content.html#ipsum" selector="div"></html-import>`;
+  const actual   = fixture.innerHTML.trim();
+  subject.ready
+    .then( () => "resolved", () => "rejected")
+    .then( (result) => {
+      assert.ok(result, "rejected", "The promise was rejected");
+      assert.equal(actual, expected, "Nothing was imported");
+      done();
+    });
+});
+</script>
+
+
 <div class="fixture import-js-api">
-  <html-import src="content.html"></html-import>
+  <html-import src="content.html" as="foo" selector="div"></html-import>
 </div>
 <script>
 setTimeout( () => {
@@ -72,6 +148,7 @@ setTimeout( () => {
     const subject = document.querySelector(".fixture.import-js-api html-import");
     assert.equal(subject.src, subject.getAttribute("src"), "The 'src' attribute is reflected");
     assert.equal(subject.as, subject.getAttribute("as"), "The 'as' attribute is reflected");
+    assert.equal(subject.selector, subject.getAttribute("selector"), "The 'selector' attribute is reflected");
     assert.ok(subject.ready, "The 'ready' property is present");
   });
 }, 1000);

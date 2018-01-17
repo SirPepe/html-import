@@ -13,6 +13,7 @@ Notable features:
 
  * Nested imports
  * Importing single elements (`<html-import src="a.html#SomeId"></html-import>`)
+ * Filter imported elements by selector (`<html-import src="a.html" selector=".foo"></html-import>`)
  * Renaming importing single elements (`<html-import src="a.html#SomeId" as="SomethingElse"></html-import>`)
  * Erasing the ids from imported elements by leaving the `as` attribute empty (`<html-import src="a.html#SomeId" as=""></html-import>`)
  * Scripts in imported HTML files (will be executed asynchronously)
@@ -46,6 +47,26 @@ Result:
 </div>
 ```
 
+To only import specific child elements use the `selector` attribute:
+
+```html
+<div class="wrapper">
+  <!-- Import children of content.html that have the class "foo" -->
+  <html-import src="content.html" selector=".foo"></html-import>
+</div>
+```
+
+Only direct child elements of the document are matched against the selector. If
+there is an element with the class `foo` in `content.html` not nested in any
+other element, this is the result:
+
+```html
+<div class="wrapper">
+  <html-import src="content.html" selector=".foo"></html-import>
+  <p class="foo">Lorem</p>
+</div>
+```
+
 You can also import single elements from a file:
 
 ```html
@@ -63,6 +84,9 @@ Result:
   <p id="foo">Lorem</p>
 </div>
 ```
+
+This will grab the element with the specified ID from anywhere in the imported
+document, no matter how deeply nested.
 
 Use the `as` attribute to change an element's ID after importing it. This might
 be useful if you want to import multiple instances of the same element into one
@@ -134,7 +158,9 @@ page, not the template element itself. If `content.html` looks like this...
 
 Because template elements themselves do not get imported into the page, the
 `as` attribute does not work when targeting templates (the `as` attribute is
-silently ignored).
+silently ignored). If the `selector` attribute is specified, it will be used
+to select the template elements to be imported (and will have no effect on their
+contents).
 
 
 
