@@ -1,13 +1,15 @@
 import babili from "rollup-plugin-babili";
 
 export default {
-  entry: "src/html-import.js",
-  format: "iife",
+  input: "src/html-import.js",
+  output: {
+    format: "iife",
+    file: "dist/html-import.min.js",
+  },
   plugins: [
     babili({
       comments: false,
       sourceMap: false,
     }),
   ],
-  dest: "dist/html-import.min.js",
 };
