@@ -30,6 +30,10 @@ Notable features:
 
 ## Why?
 
+At first glance, this seams to be a terrible idea.
+
+etc.
+
 ## Usage in HTML
 
 ## Reactivity
