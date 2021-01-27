@@ -4,6 +4,7 @@
   "description": "If you know PHP, it's basically include() for HTML",
   "main": "dist/html-import.min.js",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src",
     "test": "karma start --single-run",
     "test:dev": "karma start"

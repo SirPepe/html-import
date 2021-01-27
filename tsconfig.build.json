@@ -2,12 +2,5 @@
   "extends": "./tsconfig.json",
   "files": [
     "src/index.ts",
-    "lib/component.ts",
-    "lib/types.ts",
-    "lib/util.ts",
-    "extensions/dom.ts",
-    "extensions/events.ts",
-    "extensions/select.ts",
-  ],
-  "exclude": []
+  ]
 }
