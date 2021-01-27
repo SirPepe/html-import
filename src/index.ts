@@ -143,6 +143,12 @@ export class HTMLImportHTMLElement extends HTMLElement {
   }
 
   private disconnectedCallback() {
+    if (this.#updateTimeout) {
+      clearTimeout(this.#updateTimeout);
+    }
+    if (this.#abortInProgress) {
+      this.#abortInProgress.abort();
+    }
     this.cleanup();
   }
 
@@ -156,7 +162,10 @@ export class HTMLImportHTMLElement extends HTMLElement {
     }
   }
 
+  // Triggered when anything happens that requires a (re-)import, but debounces
+  // the actual import, mainly because attribute changes are not batched.
   private import(): void {
+    this.setupPromise();
     if (this.#updateTimeout) {
       clearTimeout(this.#updateTimeout);
     }
@@ -177,13 +186,14 @@ export class HTMLImportHTMLElement extends HTMLElement {
   }
 
   private async load(): Promise<void> {
-    this.setupPromise();
     this.#abortInProgress = new AbortController();
     try {
       const content = extractContent(
         await fetchHtml(this.src, this.#abortInProgress.signal),
         this.selector
       );
+      this.#importedNodes.length = 0;
+      this.#importedNodes.push(...content.children);
       runScripts(content, this);
       insertAfter(this, content);
       const nested = await awaitNested(
@@ -191,7 +201,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
       );
       this.#setDone([this, ...nested]);
     } catch (error) {
-      this.#setFail(error);
+      this.#setFail(error.name);
     }
   }
 

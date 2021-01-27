@@ -13,7 +13,7 @@ module.exports = (config) => {
       },
       {
         pattern: "test/resources/**/*.*",
-        watched: false,
+        watched: true,
         included: false,
         served: true,
         nocache: false,
