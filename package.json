@@ -14,7 +14,7 @@
   },
   "repository": "git+https://github.com/SirPepe/html-import.git",
   "author": "peter@peterkroener.de",
-  "license": "MIT",
+  "license": "GPLV3",
   "bugs": {
     "url": "https://github.com/SirPepe/html-import/issues"
   },
