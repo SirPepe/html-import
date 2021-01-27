@@ -68,8 +68,8 @@ async function awaitNested(
   return Promise.all(promises);
 }
 
-async function fetchHtml(url: string): Promise<string> {
-  return window.fetch(url).then((response) => response.text());
+async function fetchHtml(url: string, signal: AbortSignal): Promise<string> {
+  return window.fetch(url, { signal }).then((response) => response.text());
 }
 
 function extractContent(html: string, selector: string): DocumentFragment {
@@ -90,9 +90,49 @@ function extractContent(html: string, selector: string): DocumentFragment {
   return content;
 }
 
-class HTMLImportHTMLElement extends HTMLElement {
+export class HTMLImportHTMLElement extends HTMLElement {
   #importedNodes: Element[] = [];
   #done: Promise<HTMLImportHTMLElement[]>;
+  #working = false;
+  #setDone: (elements: HTMLImportHTMLElement[]) => void;
+  #setFail: (reason: any) => void;
+  #abortInProgress: AbortController | null = null;
+  #updateTimeout: NodeJS.Timeout | undefined = undefined;
+
+  constructor(src?: string, selector?: string) {
+    super();
+    if (src) {
+      this.src = src;
+    }
+    if (selector) {
+      this.selector = selector;
+    }
+    this.setupPromise();
+  }
+
+  // Create a new promise with new handlers only if the previous operation has
+  // finished
+  private setupPromise(): void {
+    if (!this.#working) {
+      this.#working = true;
+      this.#done = new Promise((resolve, reject) => {
+        this.#setDone = (elements) => {
+          resolve(elements);
+          this.#working = false;
+        };
+        this.#setFail = (reason) => {
+          if (reason !== "AbortError") {
+            reject(reason);
+            this.#working = false;
+          }
+        };
+      });
+    }
+  }
+
+  public get [Symbol.toStringTag](): string {
+    return "HTMLImportHTMLElement";
+  }
 
   static get observedAttributes(): string[] {
     return ["src", "selector"];
@@ -112,9 +152,21 @@ class HTMLImportHTMLElement extends HTMLElement {
     newValue: any
   ): void {
     if ((name === "src" || name === "selector") && oldValue !== newValue) {
-      this.cleanup();
       this.import();
     }
+  }
+
+  private import(): void {
+    if (this.#updateTimeout) {
+      clearTimeout(this.#updateTimeout);
+    }
+    if (this.#abortInProgress) {
+      this.#abortInProgress.abort();
+    }
+    this.#updateTimeout = setTimeout(() => {
+      this.cleanup();
+      this.load();
+    }, 0);
   }
 
   private cleanup(): void {
@@ -124,19 +176,23 @@ class HTMLImportHTMLElement extends HTMLElement {
     this.#importedNodes.length = 0;
   }
 
-  private import(): void {
-    this.#done = new Promise<HTMLImportHTMLElement[]>((resolve, reject) => {
-      fetchHtml(this.src)
-        .then((html) => extractContent(html, this.selector))
-        .then((content) => {
-          runScripts(content, this);
-          insertAfter(this, content);
-          awaitNested(
-            $<HTMLImportHTMLElement>(content, "html-import")
-          ).then((nested) => resolve([this, ...nested]));
-        })
-        .catch((error) => reject(error));
-    });
+  private async load(): Promise<void> {
+    this.setupPromise();
+    this.#abortInProgress = new AbortController();
+    try {
+      const content = extractContent(
+        await fetchHtml(this.src, this.#abortInProgress.signal),
+        this.selector
+      );
+      runScripts(content, this);
+      insertAfter(this, content);
+      const nested = await awaitNested(
+        $<HTMLImportHTMLElement>(content, "html-import")
+      );
+      this.#setDone([this, ...nested]);
+    } catch (error) {
+      this.#setFail(error);
+    }
   }
 
   get done(): Promise<HTMLImportHTMLElement[]> {
