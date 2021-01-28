@@ -80,6 +80,27 @@ Check out `demo/staticsite` to see this principle in action.
 
 ## JavaScript API
 
+You can construct instances of the element by using the `HTMLImportHTMLElement`
+constructor:
+
+```javascript
+let myImportElement = new HTMLImportHTMLElement(
+  "/optional/initial/src/value",
+  "#optionalSelector"
+);
+```
+
+Apart from `src` and `selector` (which reflect their respective attributes and
+can be used as setters), each element implements a DOM property `done` which
+returns a promise for that resolves when the element's target document has been
+loaded. `done` returns a new promise each time you use the property, with the
+promise reflecting the then-current loading operation each time.
+
+```javascript
+// TODO example
+```
+
+
 ## Caveats
 
 * Because I'm a lazy linux-using slob this element has so far only been tested in Chrome and Firefox on Ubuntu.

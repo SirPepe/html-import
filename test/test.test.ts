@@ -82,3 +82,33 @@ describe("use via innerHTML", () => {
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
 });
+
+describe("JS API", () => {
+  const fixture = document.createElement("div");
+  document.body.append(fixture);
+  beforeEach(() => (fixture.innerHTML = ""));
+
+  it("delivers a new promise from 'done' each time", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
+    const element = fixture.querySelector<HTMLImportHTMLElement>("html-import");
+    const a = element.done;
+    const b = element.done;
+    expect(a).not.toBe(b);
+    const callback = jasmine.createSpy();
+    a.then(callback);
+    b.then(callback);
+    await element.done;
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it("lets outdates done promises never resolve", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
+    const element = fixture.querySelector<HTMLImportHTMLElement>("html-import");
+    const a = element.done;
+    const callback = jasmine.createSpy();
+    a.then(callback, callback); // neither should happen on about
+    element.src = "/base/test/resources/content2.html"; // make "a" moot
+    await element.done;
+    expect(callback).toHaveBeenCalledTimes(0);
+  });
+});

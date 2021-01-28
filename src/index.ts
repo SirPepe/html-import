@@ -1,3 +1,8 @@
+type PromiseResponse = {
+  element: HTMLImportHTMLElement;
+  title: string;
+};
+
 function $<T extends Element>(
   target: Element | Document | DocumentFragment,
   selector: string
@@ -60,7 +65,7 @@ function runScripts(
 
 async function awaitNested(
   imports: Iterable<HTMLImportHTMLElement>
-): Promise<{ element: HTMLImportHTMLElement; title: string }[]> {
+): Promise<PromiseResponse[]> {
   const promises = [];
   for (const importElement of imports) {
     // Wait for the current stack to clear before reporting "done", so
@@ -98,13 +103,11 @@ function extractContent(
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
-  #done: Promise<{ element: HTMLImportHTMLElement; title: string }[]>;
-  #working = false;
-  #setDone: (
-    entries: { element: HTMLImportHTMLElement; title: string }[]
-  ) => void;
+  #done: Promise<PromiseResponse[]>;
+  #abortController = new AbortController();
+  #state: "loading" | "done" | "fail" | "none" = "none";
+  #setDone: (entries: PromiseResponse[]) => void;
   #setFail: (reason: any) => void;
-  #abortInProgress: AbortController | null = null;
   #updateTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(src?: string, selector?: string) {
@@ -115,27 +118,32 @@ export class HTMLImportHTMLElement extends HTMLElement {
     if (selector) {
       this.selector = selector;
     }
-    this.setupPromise();
+    this.reset();
   }
 
-  // Create a new promise with new handlers only if the previous operation has
-  // finished
-  private setupPromise(): void {
-    if (!this.#working) {
-      this.#working = true;
-      this.#done = new Promise((resolve, reject) => {
-        this.#setDone = (entries) => {
-          resolve(entries);
-          this.#working = false;
-        };
-        this.#setFail = (reason) => {
-          if (reason !== "AbortError") {
-            reject(reason);
-            this.#working = false;
-          }
-        };
-      });
+  private reset(): void {
+    if (this.#updateTimeout) {
+      clearTimeout(this.#updateTimeout);
     }
+    if (this.#state === "loading") {
+      this.#abortController.abort();
+      this.#abortController = new AbortController();
+    }
+    this.#state = "none";
+    this.#done = new Promise((resolve, reject) => {
+      this.#setDone = (entries) => {
+        this.#state = "done";
+        resolve(entries);
+      };
+      this.#setFail = (reason) => {
+        if (reason !== "AbortError") {
+          this.#state = "none";
+          reject(reason);
+        } else {
+          this.#state = "fail";
+        }
+      };
+    });
   }
 
   public get [Symbol.toStringTag](): string {
@@ -151,12 +159,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
   }
 
   private disconnectedCallback() {
-    if (this.#updateTimeout) {
-      clearTimeout(this.#updateTimeout);
-    }
-    if (this.#abortInProgress) {
-      this.#abortInProgress.abort();
-    }
+    this.reset();
   }
 
   private attributeChangedCallback(
@@ -172,24 +175,18 @@ export class HTMLImportHTMLElement extends HTMLElement {
   // Triggered when anything happens that requires a (re-)import, but debounces
   // the actual import, mainly because attribute changes are not batched.
   private import(): void {
+    this.reset();
     if (!this.src) {
       return;
-    }
-    this.setupPromise();
-    if (this.#updateTimeout) {
-      clearTimeout(this.#updateTimeout);
-    }
-    if (this.#abortInProgress) {
-      this.#abortInProgress.abort();
     }
     this.#updateTimeout = setTimeout(() => this.load(), 0);
   }
 
   private async load(): Promise<void> {
-    this.#abortInProgress = new AbortController();
+    this.#state = "loading";
     try {
       const imported = extractContent(
-        await fetchHtml(this.src, this.#abortInProgress.signal),
+        await fetchHtml(this.src, this.#abortController.signal),
         this.selector
       );
       runScripts(imported.content, this);
@@ -200,12 +197,13 @@ export class HTMLImportHTMLElement extends HTMLElement {
       );
       this.#setDone([{ element: this, title: imported.title }, ...nested]);
     } catch (error) {
+      console.log("e", error);
       this.#setFail(error.name);
     }
   }
 
   get done(): Promise<{ element: HTMLImportHTMLElement; title: string }[]> {
-    return this.#done;
+    return this.#done.then((value) => value);
   }
 
   get src(): string {
