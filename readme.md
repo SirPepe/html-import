@@ -10,14 +10,29 @@ in a reactive fashion.
 Examples:
 
 ```html
-<!-- The complete document body of content.html gets appended after the element -->
+<!-- Importing body content -->
 <html-import src="content.html">
-  <p>This text is visible while the target file is loading</p>
+  <p>
+    This text is replaced when the content of the body element from content.html
+    once it has loaded. If the browser does not support custom elements, this
+    text is rendered as a fallback.
+  </p>
 </html-import>
 
-<!-- Only elements matching .foo get imported up from content.html -->
+<!-- Importing only content that matches a specific selector -->
 <html-import src="content.html" selector=".foo">
-  <p>This text is visible while the target file is loading</p>
+  <p>
+    This text is replaced by elements matching .foo (that are not nested inside
+    something matching .foo themselves) in content.html when it has loaded.
+  </p>
+</html-import>
+
+<!-- Reactive import -->
+<html-import src="">
+  <p>
+    This text is replaced by whatever the src property get set to if and when it
+    gets set to something.
+  </p>
 </html-import>
 ```
 
@@ -26,7 +41,7 @@ Notable features:
 * Nest imports to your heart's content
 * Reactive imports - updating the `src` or `selector` attributes replaces already imported content with new content as specified by the attributes
 * Filter imported elements by selector (`<html-import src="a.html" selector=".foo"></html-import>`)
-* Non-blocking scripts in imported HTML files work (blocking scripts will be executed asynchronously, and thus may cause unintended effects)
+* Non-blocking scripts in imported HTML files work as expected. Blocking scripts will be executed asynchronously, and thus may cause unintended effects.
 
 ## Why?
 

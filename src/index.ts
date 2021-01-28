@@ -14,9 +14,13 @@ function isScript(node: any): node is HTMLScriptElement {
   return Object.prototype.toString.call(node) === "[object HTMLScriptElement]";
 }
 
-function insertAfter(target: Element, node: Node): void {
+function insertAfter(target: Element, content: Node): void {
   if (target.parentNode) {
-    target.parentNode.insertBefore(node, target.nextSibling);
+    if (target.nextElementSibling) {
+      target.parentNode.insertBefore(content, target.nextElementSibling);
+    } else {
+      target.parentNode.append(content);
+    }
   }
 }
 
@@ -94,7 +98,6 @@ function extractContent(
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
-  #importedNodes: Element[] = [];
   #done: Promise<{ element: HTMLImportHTMLElement; title: string }[]>;
   #working = false;
   #setDone: (
@@ -154,7 +157,6 @@ export class HTMLImportHTMLElement extends HTMLElement {
     if (this.#abortInProgress) {
       this.#abortInProgress.abort();
     }
-    this.cleanup();
   }
 
   private attributeChangedCallback(
@@ -170,6 +172,9 @@ export class HTMLImportHTMLElement extends HTMLElement {
   // Triggered when anything happens that requires a (re-)import, but debounces
   // the actual import, mainly because attribute changes are not batched.
   private import(): void {
+    if (!this.src) {
+      return;
+    }
     this.setupPromise();
     if (this.#updateTimeout) {
       clearTimeout(this.#updateTimeout);
@@ -177,17 +182,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
     if (this.#abortInProgress) {
       this.#abortInProgress.abort();
     }
-    this.#updateTimeout = setTimeout(() => {
-      this.cleanup();
-      this.load();
-    }, 0);
-  }
-
-  private cleanup(): void {
-    for (const node of this.#importedNodes) {
-      node.remove();
-    }
-    this.#importedNodes.length = 0;
+    this.#updateTimeout = setTimeout(() => this.load(), 0);
   }
 
   private async load(): Promise<void> {
@@ -197,10 +192,9 @@ export class HTMLImportHTMLElement extends HTMLElement {
         await fetchHtml(this.src, this.#abortInProgress.signal),
         this.selector
       );
-      this.#importedNodes.length = 0;
-      this.#importedNodes.push(...imported.content.children);
       runScripts(imported.content, this);
-      insertAfter(this, imported.content);
+      this.innerHTML = "";
+      this.append(imported.content);
       const nested = await awaitNested(
         $<HTMLImportHTMLElement>(imported.content, "html-import")
       );

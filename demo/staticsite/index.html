@@ -1,34 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
-<title>Document</title>
+<title>Static site - Start</title>
 <script type="module" src="../../dist/index.js"></script>
-
-<script>
-window.addEventListener("click", (evt) => {
-  const anchor = evt.target.closest(`a[href]`);
-  if (anchor && anchor.href.startsWith(window.location.origin)) {
-    evt.preventDefault();
-    window.history.pushState({}, "", anchor.href);
-    document.querySelector('html-import').src = anchor.href;
-  }
-});
-</script>
+<script type="module" src="./script.js"></script>
 
 <h1>Demo site</h1>
 
 <ul>
-  <li><a href="start.html">Start</a></li>
+  <li><a href="./">Start</a></li>
   <li><a href="about.html">About</a></li>
   <li><a href="contact.html">Contact</a></li>
 </ul>
 
-<html-import src="start.html" selector="body"></html-import>
-
-
-
-
-
-
-
-
+<main>
+  <html-import src="" selector="html-import > *">
+    <h2>Welcome to the demo's start page</h2>
+    <p>Although this is just static html content, it feels SPA-like.</p>
+  </html-import>
+</main>
