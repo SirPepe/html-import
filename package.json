@@ -5,6 +5,7 @@
   "main": "dist/html-import.min.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:dev": "tsc -w -p tsconfig.build.json",
     "lint": "eslint src",
     "test": "karma start --single-run",
     "test:dev": "karma start"
