@@ -173,7 +173,8 @@ export class HTMLImportHTMLElement extends HTMLElement {
   }
 
   // Triggered when anything happens that requires a (re-)import, but debounces
-  // the actual import, mainly because attribute changes are not batched.
+  // the actual load process, mainly because attribute changes on custom
+  // elements are, in contrast to mutation observers, not batched.
   private import(): void {
     this.reset();
     if (!this.src) {
