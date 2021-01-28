@@ -56,7 +56,7 @@ function runScripts(
 
 async function awaitNested(
   imports: Iterable<HTMLImportHTMLElement>
-): Promise<HTMLImportHTMLElement[]> {
+): Promise<{ element: HTMLImportHTMLElement; title: string }[]> {
   const promises = [];
   for (const importElement of imports) {
     // Wait for the current stack to clear before reporting "done", so
@@ -72,7 +72,10 @@ async function fetchHtml(url: string, signal: AbortSignal): Promise<string> {
   return window.fetch(url, { signal }).then((response) => response.text());
 }
 
-function extractContent(html: string, selector: string): DocumentFragment {
+function extractContent(
+  html: string,
+  selector: string
+): { content: DocumentFragment; title: string } {
   const content = window.document.createDocumentFragment();
   const document = new DOMParser().parseFromString(html, "text/html");
   if (selector) {
@@ -87,14 +90,16 @@ function extractContent(html: string, selector: string): DocumentFragment {
       content.append(window.document.importNode(child, true));
     }
   }
-  return content;
+  return { content, title: document.title };
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
   #importedNodes: Element[] = [];
-  #done: Promise<HTMLImportHTMLElement[]>;
+  #done: Promise<{ element: HTMLImportHTMLElement; title: string }[]>;
   #working = false;
-  #setDone: (elements: HTMLImportHTMLElement[]) => void;
+  #setDone: (
+    entries: { element: HTMLImportHTMLElement; title: string }[]
+  ) => void;
   #setFail: (reason: any) => void;
   #abortInProgress: AbortController | null = null;
   #updateTimeout: NodeJS.Timeout | undefined = undefined;
@@ -116,8 +121,8 @@ export class HTMLImportHTMLElement extends HTMLElement {
     if (!this.#working) {
       this.#working = true;
       this.#done = new Promise((resolve, reject) => {
-        this.#setDone = (elements) => {
-          resolve(elements);
+        this.#setDone = (entries) => {
+          resolve(entries);
           this.#working = false;
         };
         this.#setFail = (reason) => {
@@ -188,24 +193,24 @@ export class HTMLImportHTMLElement extends HTMLElement {
   private async load(): Promise<void> {
     this.#abortInProgress = new AbortController();
     try {
-      const content = extractContent(
+      const imported = extractContent(
         await fetchHtml(this.src, this.#abortInProgress.signal),
         this.selector
       );
       this.#importedNodes.length = 0;
-      this.#importedNodes.push(...content.children);
-      runScripts(content, this);
-      insertAfter(this, content);
+      this.#importedNodes.push(...imported.content.children);
+      runScripts(imported.content, this);
+      insertAfter(this, imported.content);
       const nested = await awaitNested(
-        $<HTMLImportHTMLElement>(content, "html-import")
+        $<HTMLImportHTMLElement>(imported.content, "html-import")
       );
-      this.#setDone([this, ...nested]);
+      this.#setDone([{ element: this, title: imported.title }, ...nested]);
     } catch (error) {
       this.#setFail(error.name);
     }
   }
 
-  get done(): Promise<HTMLImportHTMLElement[]> {
+  get done(): Promise<{ element: HTMLImportHTMLElement; title: string }[]> {
     return this.#done;
   }
 
