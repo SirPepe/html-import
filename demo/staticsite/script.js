@@ -46,7 +46,7 @@ window.addEventListener("popstate", ({ state }) => {
 });
 
 window.addEventListener("click", (evt) => {
-  const anchor = evt.target.closest(`a[href]`);
+  const anchor = evt.target.closest(`a[href]:not([href^="#"])`);
   if (anchor && anchor.href.startsWith(window.location.origin)) {
     evt.preventDefault();
     window.history.pushState({ href: anchor.href }, "", anchor.href);
