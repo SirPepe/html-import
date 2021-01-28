@@ -1,5 +1,8 @@
 import { HTMLImportHTMLElement } from "../src/index";
 
+const wait = (ms: number): Promise<any> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 describe("use via constructor", () => {
   const fixture = document.createElement("div");
   document.body.append(fixture);
@@ -124,6 +127,16 @@ describe("scripts", () => {
     );
     fixture.append(element);
     await element.done;
+    expect(element.firstElementChild.className).toBe("foo");
+  });
+
+  it("eventually executes linked imported scripts", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/externalScriptedContent.html"
+    );
+    fixture.append(element);
+    await element.done;
+    await wait(100); // script turned async
     expect(element.firstElementChild.className).toBe("foo");
   });
 

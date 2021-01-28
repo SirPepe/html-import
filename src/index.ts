@@ -37,16 +37,18 @@ function matchAncestor(element: Element, selector: string): Element | null {
 }
 
 // This whole dance around scripts is required because Firefox (rightly) treats
-// scripts that come from other documents as suspicious and won't run them. So
-// we have to clone the scripts and copy the original's content and/or href
-// values over to the clones, because that's not suspicious at all.
+// scripts that are cloned or adopted from other documents as suspicious and
+// won't run them. So we have to _manually_ clone the scripts and copy the
+// original's content and attributes over to the clones, because that's not
+// suspicious at all. Also screw TypeScript for having Attr extend Node, but
+// also having Node.cloneNode() return Node.
 function runScript(script: HTMLScriptElement, parent: Node): void {
   const clone = document.createElement("script");
-  insertAfter(script, clone);
   clone.text = script.text;
-  if (script.src) {
-    clone.src = script.src;
+  for (const attribute of script.attributes) {
+    clone.attributes.setNamedItem(attribute.cloneNode() as Attr);
   }
+  insertAfter(script, clone);
   parent.removeChild(script);
 }
 
