@@ -198,7 +198,6 @@ export class HTMLImportHTMLElement extends HTMLElement {
       );
       this.#setDone([{ element: this, title: imported.title }, ...nested]);
     } catch (error) {
-      console.log("e", error);
       this.#setFail(error.name);
     }
   }
