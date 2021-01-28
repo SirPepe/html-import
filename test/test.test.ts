@@ -112,3 +112,28 @@ describe("JS API", () => {
     expect(callback).toHaveBeenCalledTimes(0);
   });
 });
+
+describe("scripts", () => {
+  const fixture = document.createElement("div");
+  document.body.append(fixture);
+  beforeEach(() => (fixture.innerHTML = ""));
+
+  it("executes imported scripts", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/scriptedContent.html"
+    );
+    fixture.append(element);
+    await element.done;
+    expect(element.firstElementChild.className).toBe("foo");
+  });
+
+  it("does not execute scripts that were not imported", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/scriptedContent.html",
+      "p"
+    );
+    fixture.append(element);
+    await element.done;
+    expect(element.firstElementChild.className).toBe("");
+  });
+});
