@@ -4,12 +4,23 @@
 <title>Document</title>
 <script type="module" src="../../dist/index.js"></script>
 
+<script>
+window.addEventListener("click", (evt) => {
+  const anchor = evt.target.closest(`a[href]`);
+  if (anchor && anchor.href.startsWith(window.location.origin)) {
+    evt.preventDefault();
+    window.history.pushState({}, "", anchor.href);
+    document.querySelector('html-import').src = anchor.href;
+  }
+});
+</script>
+
 <h1>Demo site</h1>
 
 <ul>
-  <li onclick="document.querySelector('html-import').src = 'start.html'">Start</li>
-  <li onclick="document.querySelector('html-import').src = 'about.html'">About</li>
-  <li onclick="document.querySelector('html-import').src = 'contact.html'">Contact</li>
+  <li><a href="start.html">Start</a></li>
+  <li><a href="about.html">About</a></li>
+  <li><a href="contact.html">Contact</a></li>
 </ul>
 
 <html-import src="start.html" selector="body"></html-import>
