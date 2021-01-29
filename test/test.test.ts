@@ -18,7 +18,7 @@ describe("use via constructor", () => {
     fixture.append(element);
     await element.done;
     expect(element.innerHTML).toBe(
-      `<p id="lorem">Lorem</p><p id="ipsum">Ipsum</p>`
+      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
     );
   });
 
@@ -43,11 +43,11 @@ describe("use via constructor", () => {
     fixture.append(element);
     await element.done;
     expect(element.innerHTML).toBe(
-      `<p id="lorem">Lorem</p><p id="ipsum">Ipsum</p>`
+      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
     );
     element.src = "/base/test/resources/content2.html";
     await element.done;
-    expect(element.innerHTML).toBe(`<p id="dolor">Dolor</p>`);
+    expect(element.innerHTML).toBe(`<p id="dolor">Dolor</p>\n`);
   });
 
   it("replaces imported content reactively on selector change", async () => {
@@ -74,7 +74,15 @@ describe("use via innerHTML", () => {
     await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
     expect(
       fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
-    ).toBe(`<p id="lorem">Lorem</p><p id="ipsum">Ipsum</p>`);
+    ).toBe(`<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`);
+  });
+
+  it("imports a whole file with text nodes", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/contentWithText.html"></html-import>`;
+    await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
+    expect(
+      fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
+    ).toBe(`Hello\n<p id="lorem">Lorem</p>\nWorld\n<p id="ipsum">Ipsum</p>\n`);
   });
 
   it("imports only select elements", async () => {

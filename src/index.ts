@@ -88,20 +88,23 @@ function extractContent(
   selector: string
 ): { content: DocumentFragment; title: string } {
   const content = window.document.createDocumentFragment();
-  const document = new DOMParser().parseFromString(html, "text/html");
+  const source = new DOMParser().parseFromString(html, "text/html");
   if (selector) {
-    const matchingDescendants = $(document, selector);
+    const matchingDescendants = $(source, selector);
     for (const descendant of matchingDescendants) {
       if (!matchAncestor(descendant, selector)) {
-        content.append(window.document.importNode(descendant, true));
+        content.append(window.document.adoptNode(descendant));
       }
     }
   } else {
-    for (const child of document.body.children) {
-      content.append(window.document.importNode(child, true));
+    // Can't use for-of here because adoptNode() removes the adopted nodes from
+    // the source child list, for which document.body.childNodes is a *live*
+    // view.
+    while (source.body.childNodes.length > 0) {
+      content.append(window.document.adoptNode(source.body.childNodes[0]));
     }
   }
-  return { content, title: document.title };
+  return { content, title: source.title };
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
