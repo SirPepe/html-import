@@ -10,13 +10,27 @@ function $<T extends Element>(
   return target.querySelectorAll(selector);
 }
 
+function warn(...args: any[]): void {
+  if (window.console) {
+    if (typeof window.console.warn === "function") {
+      window.console.warn(...args);
+    } else if (typeof window.console.log === "function") {
+      window.console.log(...args);
+    }
+  }
+}
+
 // Not really "ASAP", but probably works well enough
 function resolveAsap(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function isScript(node: any): node is HTMLScriptElement {
-  return Object.prototype.toString.call(node) === "[object HTMLScriptElement]";
+function isAsyncByDesign(script: HTMLScriptElement): boolean {
+  return (
+    script.hasAttribute("async") ||
+    script.hasAttribute("defer") ||
+    script.getAttribute("type") === "module"
+  );
 }
 
 function insertAfter(target: Element, content: Node): void {
@@ -36,32 +50,29 @@ function matchAncestor(element: Element, selector: string): Element | null {
   return element.parentElement.closest(selector);
 }
 
-// This whole dance around scripts is required because Firefox (rightly) treats
-// scripts that are cloned or adopted from other documents as suspicious and
-// won't run them. So we have to _manually_ clone the scripts and copy the
-// original's content and attributes over to the clones, because that's not
-// suspicious at all. Also screw TypeScript for having Attr extend Node, but
-// also having Node.cloneNode() return Node.
-function runScript(script: HTMLScriptElement, parent: Node): void {
-  const clone = document.createElement("script");
-  clone.text = script.text;
-  for (const attribute of script.attributes) {
-    clone.attributes.setNamedItem(attribute.cloneNode() as Attr);
-  }
-  insertAfter(script, clone);
-  parent.removeChild(script);
-}
-
-function runScripts(
-  node: Element | DocumentFragment,
-  parent: Element | DocumentFragment
-): void {
-  if (isScript(node)) {
-    runScript(node, parent);
-  } else {
-    for (const child of node.children) {
-      runScripts(child, node);
+// Fixing scripts is required because Firefox (rightly) treats scripts that are
+// cloned or adopted from other documents as suspicious and won't run them. So
+// we have to _manually_ clone the scripts and copy the original's content and
+// attributes over to the clones, because that's not suspicious at all. This
+// must happen in all browsers for the sake of consistency. Importing scripts
+// turns them asynchronous, so we issue a warning if the scripts were not
+// originally meant to execute asynchronously. Also screw TypeScript for having
+// Attr extend Node, but also having Node.cloneNode() return Node.
+function fixScripts(context: DocumentFragment, sourceUrl: string): void {
+  const scripts = context.querySelectorAll("script");
+  for (const script of scripts) {
+    if (!isAsyncByDesign(script)) {
+      warn(
+        `An formerly blocking script in ${sourceUrl} has been imported by html-import and is now executing asynchronously`
+      );
     }
+    const clone = document.createElement("script");
+    clone.text = script.text;
+    for (const attribute of script.attributes) {
+      clone.attributes.setNamedItem(attribute.cloneNode() as Attr);
+    }
+    insertAfter(script, clone);
+    context.removeChild(script);
   }
 }
 
@@ -195,7 +206,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
         await fetchHtml(this.src, this.#abortController.signal),
         this.selector
       );
-      runScripts(imported.content, this);
+      fixScripts(imported.content, this.src);
       this.innerHTML = "";
       this.append(imported.content);
       const nested = await awaitNested(

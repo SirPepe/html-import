@@ -1,1 +1,1 @@
-document.querySelector("#test").classList.add("foo");
+document.querySelector("#test").className += "foo";
