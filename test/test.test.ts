@@ -124,6 +124,41 @@ describe("JS API", () => {
   });
 });
 
+describe("nesting", () => {
+  const fixture = document.createElement("div");
+  document.body.append(fixture);
+  beforeEach(() => (fixture.innerHTML = ""));
+
+  it("works with nested imports", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/nesting.html"
+    );
+    fixture.append(element);
+    const promiseResponse = await element.done;
+    expect(element.outerHTML)
+      .toBe(`<html-import src="/base/test/resources/nesting.html"><html-import src="/base/test/resources/content.html"><p id="lorem">Lorem</p>
+<p id="ipsum">Ipsum</p>
+</html-import>
+</html-import>`);
+    expect(promiseResponse).toHaveSize(2);
+  });
+
+  it("works with nested imports in nested imports", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/doubleNesting.html"
+    );
+    fixture.append(element);
+    const promiseResponse = await element.done;
+    expect(element.outerHTML)
+      .toBe(`<html-import src="/base/test/resources/doubleNesting.html"><html-import src="/base/test/resources/nesting.html"><html-import src="/base/test/resources/content.html"><p id="lorem">Lorem</p>
+<p id="ipsum">Ipsum</p>
+</html-import>
+</html-import>
+</html-import>`);
+    expect(promiseResponse).toHaveSize(3);
+  });
+});
+
 describe("scripts", () => {
   const fixture = document.createElement("div");
   document.body.append(fixture);

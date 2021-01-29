@@ -20,11 +20,6 @@ function warn(...args: any[]): void {
   }
 }
 
-// Not really "ASAP", but probably works well enough
-function resolveAsap(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 function isAsyncByDesign(script: HTMLScriptElement): boolean {
   return (
     script.hasAttribute("async") ||
@@ -79,15 +74,12 @@ function fixScripts(context: DocumentFragment, sourceUrl: string): void {
 async function awaitNested(
   imports: Iterable<HTMLImportHTMLElement>
 ): Promise<PromiseResponse[]> {
-  const promises = [];
+  const promises: Promise<PromiseResponse[]>[] = [];
   for (const importElement of imports) {
-    // Wait for the current stack to clear before reporting "done", so
-    // that polyfilled custom elements can initialize - otherwise
-    // importElement.ready would not be ready
-    const waiting = resolveAsap().then(() => importElement.done);
-    promises.push(waiting);
+    promises.push(importElement.done);
   }
-  return Promise.all(promises);
+  const responses = await Promise.all(promises);
+  return [].concat(...responses);
 }
 
 async function fetchHtml(url: string, signal: AbortSignal): Promise<string> {
@@ -210,7 +202,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
       this.innerHTML = "";
       this.append(imported.content);
       const nested = await awaitNested(
-        $<HTMLImportHTMLElement>(imported.content, "html-import")
+        $<HTMLImportHTMLElement>(this, "html-import")
       );
       this.#setDone([{ element: this, title: imported.title }, ...nested]);
     } catch (error) {
