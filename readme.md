@@ -4,8 +4,7 @@
 
 Custom HTML element for importing HTML documents (or parts of documents) into
 other documents on the fly. It works similar to `include()` in PHP, `import` in
-JavaScript or `#include` in C/C++, but for HTML content, but can also be used
-in a reactive fashion.
+JavaScript or `#include` in C/C++, but for HTML content.
 
 Examples:
 
@@ -23,29 +22,107 @@ Examples:
 <html-import src="content.html" selector=".foo">
   <p>
     This text is replaced by elements matching .foo (that are not nested inside
-    something matching .foo themselves) in content.html when it has loaded.
+    something matching .foo themselves) in content.html when it has loaded. Note
+    that the selector's scope is not limited to the body, so you can import
+    elements from a document's head as well.
   </p>
 </html-import>
 
 <!-- Reactive import -->
 <html-import src="">
   <p>
-    This text is replaced by whatever the src property get set to if and when it
-    gets set to something.
+    This text is replaced by whatever the src property is set to if and when it
+    gets set to something. This way the element works kindof like an iframe.
   </p>
 </html-import>
 ```
 
 Notable features:
 
-* Nest imports to your heart's content
-* Reactive imports - updating the `src` or `selector` attributes replaces already imported content with new content as specified by the attributes
-* Filter imported elements by selector (`<html-import src="a.html" selector=".foo"></html-import>`)
-* Non-blocking scripts in imported HTML files work as expected. Blocking scripts will be executed asynchronously, and thus may cause unintended effects.
+* Import whatever you like; plain HTML elements, style and link elements and
+  even script elements work. Non-blocking scripts in imported HTML files work as
+  expected. Blocking scripts will be executed asynchronously, and thus may cause
+  unintended effects.
+* Nest imports to your heart's content (as long as there's no circular imports)
+* Optionally filter imported elements by selector with an additional attribute:
+  `<html-import src="a.html" selector=".foo"></html-import>`
+* Reactive imports - updating the `src` or `selector` attributes replaces
+  already imported content with new content as specified by the attributes
+* Does not rely on any frameworks, libraries or build tools
 
 ## Why?
 
+Having dynamic HTML imports in the frontend may appear to be a questionable idea, but that really depends on the context. I originally came up with this custom elements as a way to modularize my collection HTML-based slides about various overlapping topics, for which the element worked very well. I organized almost all of my slides into around 250 "stories" that I can now combine in seconds to create new presentations.
+
+It also turns out that `<html-import>` makes it almost trivial to add a SPA-like reactive feel to old-school HTML/CMS-based projects (see [reactivity](#reactivity)).
+
+## License
+
+`<html-import>` is made available under the [GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) for open-source and personal projects. [Talk to me](https://www.peterkroener.de/kontakt/) if you want to use it for something else.
+
 ## Usage in HTML
+
+To use the element in HTML you have to import the main script somewhere. The
+custom element will register itself automatically and upgrade any
+already-existing instances of `<html-import>`.
+
+The element has two important HTML attributes:
+
+* `src` defines the source HTML document for an import element. You can omit,
+  remove or update the attribute at any time and the element will (if necessary)
+  reload the source file and update itself.
+* `selector` defines a selector for specific elements to import from the source
+  document. You can omit, remove or update the attribute at any time and the
+  element will (if necessary) reload the source file and update itself with the
+  new elements. If the `selector` attribute is missing or empty and the `source`
+  attribute is set, the import element will import *all content* from the target
+  document's `<body>` element (including text nodes). If the `selector`
+  attribute is set, it selects elements from the entire target document (not
+  just the `<body>`). You can use any selector string that your browser
+  supports.
+
+The element performs `fetch()` requests under the hood. Once such a request has
+finished, the element's contents get replaced by whatever was requested
+(optionally filtered by the selector). The content between an `<html-import>`
+element's tags thus serves as both its initial content and its fallback content
+in case some scripts break or an ancient browser without support for custom
+elements comes along.
+
+## JavaScript API
+
+You can construct instances of the element by using the `HTMLImportHTMLElement`
+constructor:
+
+```javascript
+import { HTMLImportHTMLElement } from "html-import";
+
+let myImportElement = new HTMLImportHTMLElement(
+  "/optional/initial/src/value",
+  "#optionalSelector"
+);
+
+document.body.append(myImportElement);
+```
+
+Apart from `src` and `selector` (which reflect their respective attributes and
+can be used as setters), each element implements a DOM property `done` which
+returns a promise for that resolves when the element's target document has been
+loaded. Note that `done` returns a new promise each time you access the
+property, with the promise reflecting the then-current loading operation each
+time.
+
+```javascript
+const element = document.querySelector("html-import");
+const a = element.done;
+const b = element.done; // a new promise, not equal to a
+element.src = "/somewhere/else.html"; // causes an update
+// a and b will now never resolve (assuming they have not already)
+const c = element.done; // resolves when "/somewhere/else.html" has loaded
+```
+
+Note that the internal loading mechanism for `<html-import>` debounces attribute
+updates and cleanly terminates any ongoing request if a change to `src` or
+`selector` occurs.
 
 ## Reactivity
 
@@ -58,48 +135,29 @@ documents:
 <!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
-<title>Document</title>
+<title>Static site - Start</title>
 <script type="module" src="../../dist/index.js"></script>
-
+<script type="module" src="./script.js"></script>
 <h1>Demo site</h1>
-
 <ul>
-  <li onclick="document.querySelector('html-import').src = 'start.html'">Start</li>
-  <li onclick="document.querySelector('html-import').src = 'about.html'">About</li>
-  <li onclick="document.querySelector('html-import').src = 'contact.html'">Contact</li>
+  <li><a class="active" href="./">Start</a></li>
+  <li><a href="about.html">About</a></li>
+  <li><a href="contact.html">Contact</a></li>
 </ul>
-
-<html-import src="start.html" selector="body"></html-import>
+<html-import src="" selector="html-import > *">
+  <h2>Welcome to the demo's start page</h2>
+</html-import>
 ```
 
-Clicks on the list items load the respective pages, extract their `body` content
-and dump it into the main page's DOM. Add a litte extra JS for routing and
-everything feels like a SPA without causing any work.
+Clicks on the navigation links update the `<html-import>` element's `src`
+attribute, which causes it to load the respective page, extract the content from
+the `<html-import>` element from there and dump it into this page's
+`<html-import>` element. Add a little extra JS for routing and
+your whole page suddenly feels like a SPA - when all you needed to do was to
+wrap every page's main content in `<html-import>` and write about 50 lines of
+JavaScript to intercept clicks and manage the navigation history.
 
 Check out `demo/staticsite` to see this principle in action.
-
-## JavaScript API
-
-You can construct instances of the element by using the `HTMLImportHTMLElement`
-constructor:
-
-```javascript
-let myImportElement = new HTMLImportHTMLElement(
-  "/optional/initial/src/value",
-  "#optionalSelector"
-);
-```
-
-Apart from `src` and `selector` (which reflect their respective attributes and
-can be used as setters), each element implements a DOM property `done` which
-returns a promise for that resolves when the element's target document has been
-loaded. `done` returns a new promise each time you use the property, with the
-promise reflecting the then-current loading operation each time.
-
-```javascript
-// TODO example
-```
-
 
 ## Caveats
 
