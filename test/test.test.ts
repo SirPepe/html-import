@@ -1,4 +1,4 @@
-import { HTMLImportHTMLElement } from "../src/index";
+import { HTMLImportHTMLElement } from "../src/html-import";
 
 const wait = (ms: number): Promise<any> =>
   new Promise((resolve) => setTimeout(resolve, ms));
