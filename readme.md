@@ -73,14 +73,24 @@ The element has two important HTML attributes:
   reload the source file and update itself. Both relative and absolute URLs
   work.
 * `selector` defines a selector for specific elements to import from the source
-  document. You can omit, remove or update the attribute at any time and the
-  element will (if necessary) reload the source file and update itself with the
-  new elements. If the `selector` attribute is missing or empty and the `source`
-  attribute is set, the import element will import *all content* from the target
-  document's `<body>` element (including text nodes). If the `selector`
-  attribute is set, it selects elements from the entire target document (not
-  just the `<body>`). You can use any selector string that your browser
-  supports.
+  document. Any CSS selector that your target browsers support is valid. You can
+  omit, remove or update the attribute at any time and the element will (if
+  necessary) reload the source file and update itself with the new elements. If
+  the `selector` attribute is missing or empty and the `source` attribute is
+  set, the import element will import *all content* from the target document's
+  `<body>` element (including text nodes). If the `selector` attribute is set,
+  it selects elements from the entire target document (not just the `<body>`).
+  You can use any selector string that your browser supports.
+
+If a selector has been defined *and* if the `src` attribute contains a url with
+a fragment identifier, the element will import only the fragment target if it
+also matches the selector. In summary:
+
+* no selector, no hash in URL = entire body contents
+* selector, no hash in URL = all elements matching the selector
+* no selector, hash in URL = first element matching the hash
+* selector and hash in URL = first element matching the hash if it that also
+  matches selector
 
 The element performs `fetch()` requests under the hood. Once such a request has
 finished, the element's contents get replaced by whatever was requested

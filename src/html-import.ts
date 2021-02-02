@@ -89,13 +89,25 @@ async function awaitNested(
   return [].concat(...responses);
 }
 
+// no selector, no hash = entire body contents
+// selector, no hash = all elements matching selector
+// no selector, hash = first element matching hash
+// selector and hash = first element matching hash that also matches selector
 function extractContent(
   html: string,
-  selector: string
+  selector: string,
+  hash: string
 ): { content: DocumentFragment; title: string } {
   const content = window.document.createDocumentFragment();
   const source = new DOMParser().parseFromString(html, "text/html");
-  if (selector) {
+  if (!selector && !hash) {
+    // Can't use for-of here because adoptNode() removes the adopted nodes from
+    // the source child list, for which document.body.childNodes is a *live*
+    // view.
+    while (source.body.childNodes.length > 0) {
+      content.append(window.document.adoptNode(source.body.childNodes[0]));
+    }
+  } else if (selector && !hash) {
     const matchingDescendants = $(source, selector);
     for (const descendant of matchingDescendants) {
       if (!matchAncestor(descendant, selector)) {
@@ -103,11 +115,9 @@ function extractContent(
       }
     }
   } else {
-    // Can't use for-of here because adoptNode() removes the adopted nodes from
-    // the source child list, for which document.body.childNodes is a *live*
-    // view.
-    while (source.body.childNodes.length > 0) {
-      content.append(window.document.adoptNode(source.body.childNodes[0]));
+    const hashMatch = $(source, hash)[0];
+    if (hashMatch && (!selector || hashMatch.matches(selector))) {
+      content.append(hashMatch);
     }
   }
   return { content, title: source.title };
@@ -242,7 +252,8 @@ export class HTMLImportHTMLElement extends HTMLElement {
     try {
       const imported = extractContent(
         await this.fetch(this.src, abortController.signal),
-        this.selector
+        this.selector,
+        new URL(this.src).hash,
       );
       fixScripts(imported.content, this.src);
       this.innerHTML = "";

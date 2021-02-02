@@ -104,8 +104,32 @@ describe("use via innerHTML", () => {
     ).toBe(`Hello\n<p id="lorem">Lorem</p>\nWorld\n<p id="ipsum">Ipsum</p>\n`);
   });
 
+  it("imports only elements matching the hash", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum"></html-import>`;
+    await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
+    expect(
+      fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
+    ).toBe(`<p id="ipsum">Ipsum</p>`);
+  });
+
   it("imports only select elements", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html" selector="#ipsum"></html-import>`;
+    await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
+    expect(
+      fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
+    ).toBe(`<p id="ipsum">Ipsum</p>`);
+  });
+
+  it("imports only select elements that also match the hash", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum" selector="#ipsum"></html-import>`;
+    await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
+    expect(
+      fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
+    ).toBe(`<p id="ipsum">Ipsum</p>`);
+  });
+
+  it("does not import elements that do not match the hash", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum" selector="p"></html-import>`;
     await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
     expect(
       fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
