@@ -3,6 +3,13 @@ type PromiseResponse = {
   title: string;
 };
 
+let link: HTMLAnchorElement;
+function absoluteUrl(href: string): string {
+  link = link || document.createElement("a");
+  link.href = href;
+  return link.href;
+}
+
 function $<T extends Element>(
   target: Element | Document | DocumentFragment,
   selector: string
@@ -215,7 +222,11 @@ export class HTMLImportHTMLElement extends HTMLElement {
   }
 
   get src(): string {
-    return this.getAttribute("src") || "";
+    const src = this.getAttribute("src") || "";
+    if (src) {
+      return absoluteUrl(src);
+    }
+    return "";
   }
 
   set src(value: string) {

@@ -8,6 +8,19 @@ describe("use via constructor", () => {
   document.body.append(fixture);
   beforeEach(() => (fixture.innerHTML = ""));
 
+  it("transforms relative src attributes to absolute src props", async () => {
+    const element = new HTMLImportHTMLElement(
+      "/base/test/resources/content.html"
+    );
+    expect(element.src).toMatch(/^http/);
+    expect(element.src).toMatch(/content\.html$/);
+  });
+
+  it("does not transform empty or missing src attributes", async () => {
+    expect((new HTMLImportHTMLElement()).src).toBe("");
+    expect((new HTMLImportHTMLElement("")).src).toBe("");
+  });
+
   it("imports a whole file", async () => {
     const element = new HTMLImportHTMLElement(
       "/base/test/resources/content.html"

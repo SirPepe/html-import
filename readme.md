@@ -70,7 +70,8 @@ The element has two important HTML attributes:
 
 * `src` defines the source HTML document for an import element. You can omit,
   remove or update the attribute at any time and the element will (if necessary)
-  reload the source file and update itself.
+  reload the source file and update itself. Both relative and absolute URLs
+  work.
 * `selector` defines a selector for specific elements to import from the source
   document. You can omit, remove or update the attribute at any time and the
   element will (if necessary) reload the source file and update itself with the
@@ -104,12 +105,18 @@ let myImportElement = new HTMLImportHTMLElement(
 document.body.append(myImportElement);
 ```
 
-Apart from `src` and `selector` (which reflect their respective attributes and
-can be used as setters), each element implements a DOM property `done` which
-returns a promise for that resolves when the element's target document has been
-loaded. Note that `done` returns a new promise each time you access the
-property, with the promise reflecting the then-current loading operation each
-time.
+`HTMLImportHTMLElement` implements three DOM properties:
+
+* `src` reflects the `src` HTML attribute. Can be used as a setter to change the
+  `src` value. As a getter, it always returns absolute URLs, even when the HTML
+  attribute is relative (just like a `<a>` element's `href` attribute). Returns
+  the empty string when there's no `src` set.
+* `selector` reflects the `selector` HTML attribute. Can be used as a setter to
+  change the `selector` value.
+* `done` which returns a promise for that resolves when the element's target
+  document has been loaded. Note that `done` returns a new promise each time you
+  access the property, with the promise reflecting the then-current loading
+  operation each time.
 
 ```javascript
 const element = document.querySelector("html-import");
