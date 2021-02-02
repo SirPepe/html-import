@@ -91,6 +91,11 @@ elements comes along.
 
 ## JavaScript API
 
+The JS API for `<html-import>` consists of a constructor function, three events,
+and three DOM properties.
+
+### Constructor
+
 You can construct instances of the element by using the `HTMLImportHTMLElement`
 constructor:
 
@@ -104,6 +109,21 @@ let myImportElement = new HTMLImportHTMLElement(
 
 document.body.append(myImportElement);
 ```
+
+### Events
+
+`HTMLImportHTMLElement` can fires three events, all of which carry no special
+data apart from the regular `Event` properties:
+
+* `importdone`: Fires when the element has imported content
+* `importfail` Fires when importing content has failed (e.g. due to 404)
+* `importabort` Fires when the element was about to import content, but got
+  interrupted (e.g. by a new `src` value) before it could finish
+
+Old-school attribute event handlers a la `<html-import onimportdone="...">` are
+not supported at the moment.
+
+### Properties
 
 `HTMLImportHTMLElement` implements three DOM properties:
 

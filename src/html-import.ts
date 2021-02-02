@@ -89,10 +89,6 @@ async function awaitNested(
   return [].concat(...responses);
 }
 
-async function fetchHtml(url: string, signal: AbortSignal): Promise<string> {
-  return window.fetch(url, { signal }).then((response) => response.text());
-}
-
 function extractContent(
   html: string,
   selector: string
@@ -118,11 +114,24 @@ function extractContent(
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
-  #done: Promise<PromiseResponse[]>;
+
+  // Aborts running downloads and also serves as the object symbolizing the
+  // current operation.
   #abortController = new AbortController();
+
+  // Promise fulfillment triggers mapped by the AbortController that was in use
+  // when they were registered (using the AbortController as a standin for the
+  // then-current operation)
+  #executors: WeakMap<AbortController, [
+    Resolve: (entries: PromiseResponse[]) => any,
+    Reject: (reason: any) => any
+  ][]> = new WeakMap();
+
+  // Internal state management
   #state: "loading" | "done" | "fail" | "none" = "none";
-  #setDone: (entries: PromiseResponse[]) => void;
-  #setFail: (reason: any) => void;
+
+  // Used to debounce attribute updates, which for some reason are NOT batched
+  // for custom elements
   #updateTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(src?: string, selector?: string) {
@@ -142,23 +151,39 @@ export class HTMLImportHTMLElement extends HTMLElement {
     }
     if (this.#state === "loading") {
       this.#abortController.abort();
+    }
+    // Only replace the current AbortController if it was either used in the
+    // previous block or if there are any triggers currently attached. This
+    // keeps promises alive, for which no loading process ever started.
+    const triggers = this.#executors.get(this.#abortController) || [];
+    if (this.#state === "loading" || triggers.length > 0) {
       this.#abortController = new AbortController();
     }
     this.#state = "none";
-    this.#done = new Promise((resolve, reject) => {
-      this.#setDone = (entries) => {
-        this.#state = "done";
-        resolve(entries);
-      };
-      this.#setFail = (reason) => {
-        if (reason !== "AbortError") {
-          this.#state = "none";
-          reject(reason);
-        } else {
-          this.#state = "fail";
-        }
-      };
-    });
+  }
+
+  private setDone(
+    entries: PromiseResponse[],
+    controller: AbortController,
+  ): void {
+    const triggers = this.#executors.get(controller) || [];
+    this.dispatchEvent(new Event("importdone"));
+    this.#state = "done";
+    triggers.forEach(([ resolve ]) => resolve(entries));
+  };
+
+  // A special case of failure is the AbortError which is not really a failure
+  // but rather a orderly reset/shutdown.
+  private setFail(reason: any, controller: AbortController): void {
+    const triggers = this.#executors.get(controller) || [];
+    if (reason === "AbortError") {
+      this.dispatchEvent(new Event("importabort"));
+      this.#state = "none";
+    } else {
+      this.dispatchEvent(new CustomEvent("importfail", { detail: reason }));
+      this.#state = "fail";
+      triggers.forEach(([ , reject ]) => reject(reason));
+    }
   }
 
   public get [Symbol.toStringTag](): string {
@@ -198,11 +223,25 @@ export class HTMLImportHTMLElement extends HTMLElement {
     this.#updateTimeout = setTimeout(() => this.load(), 0);
   }
 
+  // Subclasses and tests may want to mess with this
+  protected async fetch(url: string, signal: AbortSignal): Promise<string> {
+    const response = await window.fetch(url, { signal });
+    if (response.ok) {
+      return await response.text();
+    } else {
+      throw new Error(`Response status not ok: ${response.statusText}`);
+    }
+  }
+
   private async load(): Promise<void> {
     this.#state = "loading";
+    // this.#abortController may be replaced while the load function is in the
+    // middle of its job. We need this reference to keep access the relevant
+    // promise triggers for when the operation completes.
+    const abortController = this.#abortController;
     try {
       const imported = extractContent(
-        await fetchHtml(this.src, this.#abortController.signal),
+        await this.fetch(this.src, abortController.signal),
         this.selector
       );
       fixScripts(imported.content, this.src);
@@ -211,14 +250,24 @@ export class HTMLImportHTMLElement extends HTMLElement {
       const nested = await awaitNested(
         $<HTMLImportHTMLElement>(this, "html-import")
       );
-      this.#setDone([{ element: this, title: imported.title }, ...nested]);
+      this.setDone(
+        [{ element: this, title: imported.title }, ...nested],
+        abortController,
+      );
     } catch (error) {
-      this.#setFail(error.name);
+      this.setFail(error.name, abortController);
     }
   }
 
-  get done(): Promise<{ element: HTMLImportHTMLElement; title: string }[]> {
-    return this.#done.then((value) => value);
+  get done(): Promise<PromiseResponse[]> {
+    return new Promise((resolve, reject) => {
+      const triggers = this.#executors.get(this.#abortController);
+      if (triggers) {
+        triggers.push([resolve, reject]);
+      } else {
+        this.#executors.set(this.#abortController, [[resolve, reject]]);
+      };
+    });
   }
 
   get src(): string {

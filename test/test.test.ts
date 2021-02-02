@@ -3,6 +3,12 @@ import { HTMLImportHTMLElement } from "../src/html-import";
 const wait = (ms: number): Promise<any> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+// Add artificial delay to make observing events easy
+const slowdown = (element: HTMLImportHTMLElement): void => {
+  (element as any).fetch = (url: string, signal: AbortSignal): Promise<string> =>
+    wait(100).then(() => (HTMLImportHTMLElement.prototype as any).fetch.call(element, url, signal));
+};
+
 describe("use via constructor", () => {
   const fixture = document.createElement("div");
   document.body.append(fixture);
@@ -120,28 +126,51 @@ describe("JS API", () => {
   document.body.append(fixture);
   beforeEach(() => (fixture.innerHTML = ""));
 
-  it("delivers a new promise from 'done' each time", async () => {
+  it("delivers a new promise from 'done' each time and fires done events", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
     const element = fixture.querySelector<HTMLImportHTMLElement>("html-import");
+    const eventCallback = jasmine.createSpy();
+    element.addEventListener("importdone", eventCallback);
     const a = element.done;
     const b = element.done;
     expect(a).not.toBe(b);
-    const callback = jasmine.createSpy();
-    a.then(callback);
-    b.then(callback);
+    const promiseCallback = jasmine.createSpy();
+    a.then(promiseCallback);
+    b.then(promiseCallback);
     await element.done;
-    expect(callback).toHaveBeenCalledTimes(2);
+    expect(promiseCallback).toHaveBeenCalledTimes(2);
+    expect(eventCallback).toHaveBeenCalledTimes(1);
   });
 
-  it("lets outdates done promises never resolve", async () => {
+  it("fires abort events and never fulfills outdated promises", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
     const element = fixture.querySelector<HTMLImportHTMLElement>("html-import");
+    slowdown(element);
     const a = element.done;
-    const callback = jasmine.createSpy();
-    a.then(callback, callback); // neither should happen on about
+    const promiseCallback = jasmine.createSpy();
+    a.then(promiseCallback, promiseCallback); // neither should happen on abort
+    const eventCallback = jasmine.createSpy();
+    element.addEventListener("importabort", eventCallback);
+    await wait(20); // allow debounce to happen after attribute change
     element.src = "/base/test/resources/content2.html"; // make "a" moot
     await element.done;
-    expect(callback).toHaveBeenCalledTimes(0);
+    expect(promiseCallback).toHaveBeenCalledTimes(0);
+    expect(eventCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires fail events and rejects promises", async () => {
+    fixture.innerHTML = `<html-import></html-import>`;
+    const element = fixture.querySelector<HTMLImportHTMLElement>("html-import");
+    element.src = "/404";
+    const thenCallback = jasmine.createSpy("then");
+    const catchCallback = jasmine.createSpy("catch");
+    const eventCallback = jasmine.createSpy("failevent");
+    element.done.then(thenCallback, catchCallback);
+    element.addEventListener("importfail", eventCallback);
+    await element.done.catch(() => {});
+    expect(thenCallback).toHaveBeenCalledTimes(0);
+    expect(catchCallback).toHaveBeenCalledTimes(1);
+    expect(eventCallback).toHaveBeenCalledTimes(1);
   });
 });
 
