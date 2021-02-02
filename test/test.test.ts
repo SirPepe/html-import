@@ -92,6 +92,14 @@ describe("use via innerHTML", () => {
       fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
+
+  it("imports only top-most select elements", async () => {
+    fixture.innerHTML = `<html-import src="/base/test/resources/nestedContent.html" selector=".foo"></html-import>`;
+    await fixture.querySelector<HTMLImportHTMLElement>("html-import").done;
+    expect(
+      fixture.querySelector<HTMLImportHTMLElement>("html-import").innerHTML
+    ).toBe(`<p class="foo"><span class="foo">Lorem</span></p>`);
+  });
 });
 
 describe("JS API", () => {
