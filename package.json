@@ -4,7 +4,7 @@
   "description": "If you know PHP, it's basically include() for HTML",
   "main": "dist/html-import.min.js",
   "scripts": {
-    "build": "rollup -c rollup.config.esm.js && rollup -c rollup.config.min.js",
+    "build": "rollup -c",
     "build:dev": "tsc -w -p tsconfig.build.json",
     "lint": "eslint src",
     "test": "karma start --single-run",
@@ -30,6 +30,7 @@
     "@rollup/plugin-commonjs": "^17.1.0",
     "@rollup/plugin-node-resolve": "^11.1.1",
     "@types/jasmine": "^3.6.3",
+    "@types/marked": "^1.2.2",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "eslint": "^7.18.0",
@@ -48,6 +49,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.5",
-    "core-js": "^3.8.3"
+    "core-js": "^3.8.3",
+    "marked": "^1.2.8"
   }
 }

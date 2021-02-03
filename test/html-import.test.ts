@@ -5,8 +5,13 @@ const wait = (ms: number): Promise<any> =>
 
 // Add artificial delay to make observing events easy
 const slowdown = (element: HTMLImportHTMLElement): void => {
-  (element as any).fetch = (url: string, signal: AbortSignal): Promise<string> =>
-    wait(100).then(() => (HTMLImportHTMLElement.prototype as any).fetch.call(element, url, signal));
+  (element as any).fetch = (
+    url: string,
+    signal: AbortSignal
+  ): Promise<string> =>
+    wait(100).then(() =>
+      (HTMLImportHTMLElement.prototype as any).fetch.call(element, url, signal)
+    );
 };
 
 describe("use via constructor", () => {
@@ -23,8 +28,8 @@ describe("use via constructor", () => {
   });
 
   it("does not transform empty or missing src attributes", async () => {
-    expect((new HTMLImportHTMLElement()).src).toBe("");
-    expect((new HTMLImportHTMLElement("")).src).toBe("");
+    expect(new HTMLImportHTMLElement().src).toBe("");
+    expect(new HTMLImportHTMLElement("").src).toBe("");
   });
 
   it("imports a whole file", async () => {
@@ -191,7 +196,7 @@ describe("JS API", () => {
     const eventCallback = jasmine.createSpy("failevent");
     element.done.then(thenCallback, catchCallback);
     element.addEventListener("importfail", eventCallback);
-    await element.done.catch(() => {});
+    await element.done.catch(() => {}); // eslint-disable-line
     expect(thenCallback).toHaveBeenCalledTimes(0);
     expect(catchCallback).toHaveBeenCalledTimes(1);
     expect(eventCallback).toHaveBeenCalledTimes(1);

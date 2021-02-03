@@ -3,9 +3,10 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "outDir": "esm"
+    "outDir": "esm",
+    "allowSyntheticDefaultImports": true
   },
   "exclude": [
-      "node_modules"
+    "node_modules"
   ]
 }

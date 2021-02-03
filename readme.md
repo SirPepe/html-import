@@ -49,6 +49,7 @@ Notable features:
 * Does not require on any frameworks, libraries or build tools! You can use the
   ESM version of this component if you use a module bundler any npm/yarn or
   just drop the minified version right into your web project.
+* Easy to customize through monkey patching and/or events
 
 ## Why?
 
@@ -205,6 +206,33 @@ wrap every page's main content in `<html-import>` and write about 50 lines of
 JavaScript to intercept clicks and manage the navigation history.
 
 Check out `demo/staticsite` to see this principle in action.
+
+## Customize
+
+You can easily customize the element's behavior by monkey patching the
+prototype:
+
+```javascript
+function replaceContent(newContent) {
+  // code that overrides the built-in method "replaceContent"
+}
+
+const definition = window.customElements.get("html-import");
+if (definition) { // Element has already been registered
+  definition.prototype.replaceContent = replaceContent;
+} else { // Await element registration
+  window.customElements.whenDefined("html-import").then(() => {
+    window.customElements.get(
+      "html-import"
+    ).prototype.replaceContent = replaceContent;
+  });
+}
+```
+
+To run code on newly imported content each time the content changes, add a
+listener to the `importdone` event and modify the event's target content (that
+is, the content that has just been inserted into the `<html-import>` element in
+question) as needed.
 
 ## Caveats
 

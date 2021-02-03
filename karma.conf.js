@@ -25,6 +25,7 @@ module.exports = (config) => {
     karmaTypescriptConfig: {
       compilerOptions: {
         target: "ES2015",
+        allowSyntheticDefaultImports: true,
       },
       bundlerOptions: {
         transforms: [require("karma-typescript-es6-transform")()],
