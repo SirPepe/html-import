@@ -43,13 +43,14 @@ Notable features:
   unintended effects.
 * Nest imports to your heart's content (as long as there's no circular imports)
 * Optionally filter imported elements by selector with an additional attribute:
-  `<html-import src="a.html" selector=".foo"></html-import>`
+  `<html-import src="a.html" selector=".foo"></html-import>`. Fragments also:
+  work for this: `<html-import src="a.html#foo"></html-import>`.
 * Reactive imports - updating the `src` or `selector` attributes replaces
   already imported content with new content as specified by the attributes
 * Does not require on any frameworks, libraries or build tools! You can use the
-  ESM version of this component if you use a module bundler any npm/yarn or
-  just drop the minified version right into your web project.
-* Easy to customize through monkey patching and/or events
+  ESM version of this component with your favorite module bundler or just drop
+  the minified version right into your web project.
+* Easy to customize through monkey patching and events handlers.
 
 ## Why?
 
@@ -75,7 +76,8 @@ want to use it for something else.
 
 To use the element in HTML you have to import the main script somewhere. The
 custom element will register itself automatically and upgrade any
-already-existing instances of `<html-import>`. Any new instances of
+already-existing instances of `<html-import>`. Any new instances will initialize
+in an upgraded state.
 
 The element has two important HTML attributes:
 
@@ -121,7 +123,7 @@ You can construct instances of the element by using the `HTMLImportHTMLElement`
 constructor:
 
 ```javascript
-import { HTMLImportHTMLElement } from "html-import";
+import HTMLImportHTMLElement from "html-import";
 
 let myImportElement = new HTMLImportHTMLElement(
   "/optional/initial/src/value",
@@ -131,18 +133,28 @@ let myImportElement = new HTMLImportHTMLElement(
 document.body.append(myImportElement);
 ```
 
+If you don't use ESM modules, you can always get access to the constructor via
+the custom elements registry:
+
+```javascript
+window.customElements.whenDefined("html-import").then(() => {
+  let HTMLImportHTMLElement = window.customElements.get("html-import");
+});
+```
+
 ### Events
 
-`HTMLImportHTMLElement` can fires three events, all of which carry no special
-data apart from the regular `Event` properties:
+`HTMLImportHTMLElement` can fire three events:
 
 * `importdone`: Fires when the element has imported content
-* `importfail` Fires when importing content has failed (e.g. due to 404)
+* `importfail` Fires when importing content has failed (e.g. due to 404).
+  Implements a property `detail` that contains the reason for the failure.
 * `importabort` Fires when the element was about to import content, but got
   interrupted (e.g. by a new `src` value) before it could finish
 
-Old-school attribute event handlers a la `<html-import onimportdone="...">` are
-not supported at the moment.
+All three events bubble and are not cancelable. Old-school attribute event
+handlers a la `<html-import onimportdone="...">` are not supported at the
+moment.
 
 ### Properties
 
@@ -160,17 +172,30 @@ not supported at the moment.
   operation each time.
 
 ```javascript
-const element = document.querySelector("html-import");
-const a = element.done;
-const b = element.done; // a new promise, not equal to a
+let element = document.querySelector("html-import");
+let a = element.done;
+let b = element.done; // new promise, not equal to "a"
 element.src = "/somewhere/else.html"; // causes an update
-// a and b will now never resolve (assuming they have not already)
-const c = element.done; // resolves when "/somewhere/else.html" has loaded
+// "a" and "b" will now never resolve (assuming they have not already)
+let c = element.done; // resolves when "/somewhere/else.html" has loaded
 ```
 
-Note that the internal loading mechanism for `<html-import>` debounces attribute
+The promises returned by `done` resolve to an array of data about what has been
+imported:
+
+```javascript
+let element = document.querySelector("html-import");
+element.done.then( (data) => {
+  // data[0] = { element: affectedImportElement; title: "Imported document's title"; }
+  // data[1] = { element: firstNestedImportElement; title: "Nested imported document's title"; }
+  // etc.
+})
+```
+
+Note that the internal loading mechanism for `<html-import>` batches attribute
 updates and cleanly terminates any ongoing request if a change to `src` or
-`selector` occurs.
+`selector` occurs. You don't have to concern yourself with efficiency, just set
+whatever attributes or DOM properties you want to change!
 
 ## Reactivity
 
@@ -179,13 +204,19 @@ update. The old nodes get removed and replaced by the newly imported content.
 This means that it's quite easy to "ajaxify" any old collection of static HTML
 documents:
 
+1. Just wrap every page's main content in `<html-import>` (a minimal change to
+   your project's main template)
+2. Add a bit of javascript to intercept navigation events and manage the history
+   (you can use your favorite routing library or just write a few lines
+   yourself)
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
 <title>Static site - Start</title>
-<script type="module" src="../../dist/index.js"></script>
-<script type="module" src="./script.js"></script>
+<script defer src="../../dist/html-import.min.js"></script>
+<script defer src="./script.js"></script>
 <h1>Demo site</h1>
 <ul>
   <li><a class="active" href="./">Start</a></li>
@@ -203,7 +234,9 @@ the `<html-import>` element from there and dump it into this page's
 `<html-import>` element. Add a little extra JS for routing and
 your whole page suddenly feels like a SPA - when all you needed to do was to
 wrap every page's main content in `<html-import>` and write about 50 lines of
-JavaScript to intercept clicks and manage the navigation history.
+JavaScript to intercept clicks and manage the navigation history. If something
+breaks or an ancient browser comes along, your project will still work via
+traditional page loads.
 
 Check out `demo/staticsite` to see this principle in action.
 
@@ -217,7 +250,7 @@ function replaceContent(newContent) {
   // code that overrides the built-in method "replaceContent"
 }
 
-const definition = window.customElements.get("html-import");
+let definition = window.customElements.get("html-import");
 if (definition) { // Element has already been registered
   definition.prototype.replaceContent = replaceContent;
 } else { // Await element registration
@@ -232,7 +265,11 @@ if (definition) { // Element has already been registered
 To run code on newly imported content each time the content changes, add a
 listener to the `importdone` event and modify the event's target content (that
 is, the content that has just been inserted into the `<html-import>` element in
-question) as needed.
+question) as needed:
+
+```javascript
+window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
+```
 
 ## Caveats
 
