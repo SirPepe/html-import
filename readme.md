@@ -1,7 +1,5 @@
 # &lt;html-import&gt;
 
-**v2 is a work in progress!**
-
 Custom HTML element for importing HTML documents (or parts of documents) into
 other documents on the fly. It works similar to `include()` in PHP, `import` in
 JavaScript or `#include` in C/C++, but for HTML content.
@@ -48,23 +46,35 @@ Notable features:
   `<html-import src="a.html" selector=".foo"></html-import>`
 * Reactive imports - updating the `src` or `selector` attributes replaces
   already imported content with new content as specified by the attributes
-* Does not rely on any frameworks, libraries or build tools
+* Does not require on any frameworks, libraries or build tools! You can use the
+  ESM version of this component if you use a module bundler any npm/yarn or
+  just drop the minified version right into your web project.
 
 ## Why?
 
-Having dynamic HTML imports in the frontend may appear to be a questionable idea, but that really depends on the context. I originally came up with this custom elements as a way to modularize my collection HTML-based slides about various overlapping topics, for which the element worked very well. I organized almost all of my slides into around 250 "stories" that I can now combine in seconds to create new presentations.
+Having dynamic HTML imports in the frontend (essentially glorified iframes) may
+appear to be a questionable idea, but that really depends on the context. I
+originally came up with this custom elements as a way to modularize my
+collection of HTML-based slides about various overlapping topics, for which the
+element worked very well. I organized almost all of my slides into around 250
+"stories" that I can now assemble into new presentations in minutes.
 
-It also turns out that `<html-import>` makes it almost trivial to add a SPA-like reactive feel to old-school HTML/CMS-based projects (see [reactivity](#reactivity)).
+It also turns out that `<html-import>` makes it almost trivial to add a SPA-like
+reactive feel to old-school HTML/CMS-based projects (see
+[reactivity](#reactivity)).
 
 ## License
 
-`<html-import>` is made available under the [GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) for open-source and personal projects. [Talk to me](https://www.peterkroener.de/kontakt/) if you want to use it for something else.
+`<html-import>` is made available under the
+[GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) for open-source
+and personal projects. [Talk to me](https://www.peterkroener.de/kontakt/) if you
+want to use it for something else.
 
 ## Usage in HTML
 
 To use the element in HTML you have to import the main script somewhere. The
 custom element will register itself automatically and upgrade any
-already-existing instances of `<html-import>`.
+already-existing instances of `<html-import>`. Any new instances of
 
 The element has two important HTML attributes:
 
