@@ -3,6 +3,11 @@ type PromiseResponse = {
   title: string;
 };
 
+type FulfillmentCallbacks = [
+  Resolve: (entries: PromiseResponse[]) => any,
+  Reject: (reason: any) => any
+];
+
 let link: HTMLAnchorElement;
 function absoluteUrl(href: string): string {
   link = link || document.createElement("a");
@@ -124,24 +129,22 @@ function extractContent(
 }
 
 export class HTMLImportHTMLElement extends HTMLElement {
-
   // Aborts running downloads and also serves as the object symbolizing the
-  // current operation.
+  // current operation - AbortController is single-use anyway and so has to be
+  // replaced for each request.
   #abortController = new AbortController();
 
-  // Promise fulfillment triggers mapped by the AbortController that was in use
-  // when they were registered (using the AbortController as a standin for the
-  // then-current operation)
-  #executors: WeakMap<AbortController, [
-    Resolve: (entries: PromiseResponse[]) => any,
-    Reject: (reason: any) => any
-  ][]> = new WeakMap();
-
-  // Internal state management
+  // Internal state management, used to decide if the AbortController needs to
+  // be used when a new request happens.
   #state: "loading" | "done" | "fail" | "none" = "none";
 
+  // Promise fulfillment triggers mapped by the AbortController that was in use
+  // when they were registered (using the AbortController as a stand-in for the
+  // then-current operation)
+  #callbacks: WeakMap<AbortController, FulfillmentCallbacks[]> = new WeakMap();
+
   // Used to debounce attribute updates, which for some reason are NOT batched
-  // for custom elements
+  // for custom elements (in contrast to attribute changes in MutationObserver).
   #updateTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(src?: string, selector?: string) {
@@ -152,7 +155,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
     if (selector) {
       this.selector = selector;
     }
-    this.reset();
+    this.#state = "none";
   }
 
   private reset(): void {
@@ -165,7 +168,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
     // Only replace the current AbortController if it was either used in the
     // previous block or if there are any triggers currently attached. This
     // keeps promises alive, for which no loading process ever started.
-    const triggers = this.#executors.get(this.#abortController) || [];
+    const triggers = this.#callbacks.get(this.#abortController) || [];
     if (this.#state === "loading" || triggers.length > 0) {
       this.#abortController = new AbortController();
     }
@@ -174,25 +177,25 @@ export class HTMLImportHTMLElement extends HTMLElement {
 
   private setDone(
     entries: PromiseResponse[],
-    controller: AbortController,
+    controller: AbortController
   ): void {
-    const triggers = this.#executors.get(controller) || [];
+    const callbacks = this.#callbacks.get(controller) || [];
     this.dispatchEvent(new Event("importdone"));
     this.#state = "done";
-    triggers.forEach(([ resolve ]) => resolve(entries));
-  };
+    callbacks.forEach(([resolve]) => resolve(entries));
+  }
 
-  // A special case of failure is the AbortError which is not really a failure
+  // A special case of failure is the AbortError which is not really a "failure"
   // but rather a orderly reset/shutdown.
   private setFail(reason: any, controller: AbortController): void {
-    const triggers = this.#executors.get(controller) || [];
+    const callbacks = this.#callbacks.get(controller) || [];
     if (reason === "AbortError") {
       this.dispatchEvent(new Event("importabort"));
       this.#state = "none";
     } else {
       this.dispatchEvent(new CustomEvent("importfail", { detail: reason }));
       this.#state = "fail";
-      triggers.forEach(([ , reject ]) => reject(reason));
+      callbacks.forEach(([, reject]) => reject(reason));
     }
   }
 
@@ -233,7 +236,7 @@ export class HTMLImportHTMLElement extends HTMLElement {
     this.#updateTimeout = setTimeout(() => this.load(), 0);
   }
 
-  // Subclasses and tests may want to mess with this
+  // Subclasses, extensions and tests may want to mess with this method
   protected async fetch(url: string, signal: AbortSignal): Promise<string> {
     const response = await window.fetch(url, { signal });
     if (response.ok) {
@@ -241,6 +244,12 @@ export class HTMLImportHTMLElement extends HTMLElement {
     } else {
       throw new Error(`Response status not ok: ${response.statusText}`);
     }
+  }
+
+  // Subclasses, extensions and tests may want to mess with this method
+  protected replaceContent(newContent: DocumentFragment): void {
+    this.innerHTML = "";
+    this.append(newContent);
   }
 
   private async load(): Promise<void> {
@@ -253,17 +262,16 @@ export class HTMLImportHTMLElement extends HTMLElement {
       const imported = extractContent(
         await this.fetch(this.src, abortController.signal),
         this.selector,
-        new URL(this.src).hash,
+        new URL(this.src).hash
       );
       fixScripts(imported.content, this.src);
-      this.innerHTML = "";
-      this.append(imported.content);
+      this.replaceContent(imported.content);
       const nested = await awaitNested(
         $<HTMLImportHTMLElement>(this, "html-import")
       );
       this.setDone(
         [{ element: this, title: imported.title }, ...nested],
-        abortController,
+        abortController
       );
     } catch (error) {
       this.setFail(error.name, abortController);
@@ -272,12 +280,12 @@ export class HTMLImportHTMLElement extends HTMLElement {
 
   get done(): Promise<PromiseResponse[]> {
     return new Promise((resolve, reject) => {
-      const triggers = this.#executors.get(this.#abortController);
-      if (triggers) {
-        triggers.push([resolve, reject]);
+      const callbacks = this.#callbacks.get(this.#abortController);
+      if (callbacks) {
+        callbacks.push([resolve, reject]);
       } else {
-        this.#executors.set(this.#abortController, [[resolve, reject]]);
-      };
+        this.#callbacks.set(this.#abortController, [[resolve, reject]]);
+      }
     });
   }
 
