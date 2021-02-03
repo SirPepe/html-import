@@ -1,10 +1,10 @@
-import { HTMLImportHTMLElement } from "../../esm/html-import.js";
-
 // Just to make everything feel ajax-like (that is, slow)
-const baseFetch = HTMLImportHTMLElement.prototype.fetch;
-HTMLImportHTMLElement.prototype.fetch = function (...args) {
-  return new Promise((res) => setTimeout(() => res(baseFetch(...args)), 500));
-};
+window.customElements.whenDefined("html-import").then(() => {
+  const baseFetch = window.HTMLImportHTMLElement.prototype.fetch;
+  window.HTMLImportHTMLElement.prototype.fetch = function (...args) {
+    return new Promise((res) => setTimeout(() => res(baseFetch(...args)), 500));
+  };
+});
 
 // Everything below this intercepts click events on links, handles the "active"
 // class in the main navigation and manages the history.

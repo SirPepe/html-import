@@ -128,7 +128,7 @@ function extractContent(
   return { content, title: source.title };
 }
 
-export class HTMLImportHTMLElement extends HTMLElement {
+export default class HTMLImportHTMLElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
   // current operation - AbortController is single-use anyway and so has to be
   // replaced for each request.

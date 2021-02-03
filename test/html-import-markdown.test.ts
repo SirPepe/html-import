@@ -1,4 +1,4 @@
-import { HTMLImportHTMLElement } from "../src/html-import";
+import HTMLImportHTMLElement from "../src/html-import";
 import "../src/html-import-markdown";
 
 describe("markdown extension", () => {

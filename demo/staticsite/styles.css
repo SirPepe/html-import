@@ -1,3 +1,13 @@
 .active {
   font-weight: bold;
 }
+
+.loading {
+  transition: opacity 200ms;
+  opacity: 1;
+}
+.loading[hidden] {
+  display: inline;
+  opacity: 0;
+}
+
