@@ -180,7 +180,7 @@ export default class HTMLImportHTMLElement extends HTMLElement {
     controller: AbortController
   ): void {
     const callbacks = this.#callbacks.get(controller) || [];
-    this.dispatchEvent(new Event("importdone"));
+    this.dispatchEvent(new Event("importdone", { bubbles: true }));
     this.#state = "done";
     callbacks.forEach(([resolve]) => resolve(entries));
   }
@@ -190,10 +190,12 @@ export default class HTMLImportHTMLElement extends HTMLElement {
   private setFail(reason: any, controller: AbortController): void {
     const callbacks = this.#callbacks.get(controller) || [];
     if (reason === "AbortError") {
-      this.dispatchEvent(new Event("importabort"));
+      this.dispatchEvent(new Event("importabort", { bubbles: true }));
       this.#state = "none";
     } else {
-      this.dispatchEvent(new CustomEvent("importfail", { detail: reason }));
+      this.dispatchEvent(
+        new CustomEvent("importfail", { bubbles: true, detail: reason })
+      );
       this.#state = "fail";
       callbacks.forEach(([, reject]) => reject(reason));
     }

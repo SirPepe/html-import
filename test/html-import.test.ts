@@ -201,6 +201,31 @@ describe("JS API", () => {
     expect(catchCallback).toHaveBeenCalledTimes(1);
     expect(eventCallback).toHaveBeenCalledTimes(1);
   });
+
+  it("bubbles all events", async () => {
+    const onDone = jasmine.createSpy();
+    const onFail = jasmine.createSpy();
+    const onAbort = jasmine.createSpy();
+    fixture.addEventListener("importdone", onDone);
+    fixture.addEventListener("importfail", onFail);
+    fixture.addEventListener("importabort", onAbort);
+    const elements = [
+      new HTMLImportHTMLElement("/base/test/resources/content.html"),
+      new HTMLImportHTMLElement("/base/test/resources/404.html"),
+      new HTMLImportHTMLElement("/base/test/resources/content.html"),
+    ];
+    Array.from(elements).forEach(slowdown);
+    fixture.append(...elements);
+    await wait(20); // allow debounce to happen
+    elements[2].src = "/base/test/resources/content2.html";
+    await Promise.all(elements.map(({ done }) => done.catch(() => {}))); // eslint-disable-line
+    expect(onDone).toHaveBeenCalledTimes(2); // 0, 2
+    expect(onFail).toHaveBeenCalledTimes(1); // 1
+    expect(onAbort).toHaveBeenCalledTimes(1); // 2
+    fixture.removeEventListener("importdone", onDone);
+    fixture.removeEventListener("importfail", onFail);
+    fixture.removeEventListener("importabort", onAbort);
+  });
 });
 
 describe("nesting", () => {
