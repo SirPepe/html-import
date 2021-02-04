@@ -50,7 +50,7 @@ Notable features:
 * Does not require on any frameworks, libraries or build tools! You can use the
   ESM version of this component with your favorite module bundler or just drop
   the minified version right into your web project.
-* Easy to customize through monkey patching and events handlers.
+* Easy to customize through subclassing, monkey patching or events handlers.
 
 ## Why?
 
@@ -119,13 +119,13 @@ and three DOM properties.
 
 ### Constructor
 
-You can construct instances of the element by using the `HTMLImportHTMLElement`
+You can construct instances of the element by using the `HTMLHTMLImportElement`
 constructor:
 
 ```javascript
-import HTMLImportHTMLElement from "html-import";
+import HTMLHTMLImportElement from "html-import";
 
-let myImportElement = new HTMLImportHTMLElement(
+let myImportElement = new HTMLHTMLImportElement(
   "/optional/initial/src/value",
   "#optionalSelector"
 );
@@ -138,13 +138,13 @@ the custom elements registry:
 
 ```javascript
 window.customElements.whenDefined("html-import").then(() => {
-  let HTMLImportHTMLElement = window.customElements.get("html-import");
+  let HTMLHTMLImportElement = window.customElements.get("html-import");
 });
 ```
 
 ### Events
 
-`HTMLImportHTMLElement` can fire three events:
+`HTMLHTMLImportElement` can fire three events:
 
 * `importdone`: Fires when the element has imported content
 * `importfail` Fires when importing content has failed (e.g. due to 404).
@@ -158,7 +158,7 @@ moment.
 
 ### Properties
 
-`HTMLImportHTMLElement` implements three DOM properties:
+`HTMLHTMLImportElement` implements three DOM properties:
 
 * `src` reflects the `src` HTML attribute. Can be used as a setter to change the
   `src` value. As a getter, it always returns absolute URLs, even when the HTML
@@ -242,30 +242,45 @@ Check out `demo/staticsite` to see this principle in action.
 
 ## Customize
 
-You can easily customize the element's behavior by monkey patching the
-prototype:
+You can easily customize the element's behavior by subclassing or monkey
+patching `HTMLHTMLImportElement`. Three methods on the `HTMLHTMLImportElement`
+class are hooks for extensions:
+
+* `public async fetch(url: string, signal: AbortSignal): Promise<string>`
+  downloads the text content from a URL
+* `public beforeReplaceContent(content: DocumentFragment): DocumentFragment`
+  modifies the content before it is used
+* `replaceContent(newContent: DocumentFragment): void` controls the actual
+  replacing of the old content
+
+The following `HTMLImportMarkdownElement` illustrates how you can easily build
+on top of `<html-import>`:
 
 ```javascript
-function replaceContent(newContent) {
-  // code that overrides the built-in method "replaceContent"
+export default class HTMLImportMarkdownElement extends HTMLHTMLImportElement {
+  public beforeReplaceContent(content: DocumentFragment): DocumentFragment {
+    const contentContainer = this.ownerDocument.createElement("template");
+    let html = "";
+    for (const node of content.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        html += node.textContent;
+      } else if (node instanceof HTMLElement) {
+        html += node.innerText;
+      }
+    }
+    contentContainer.innerHTML = parseMarkdown(html);
+    return contentContainer.content;
+  }
 }
 
-let definition = window.customElements.get("html-import");
-if (definition) { // Element has already been registered
-  definition.prototype.replaceContent = replaceContent;
-} else { // Await element registration
-  window.customElements.whenDefined("html-import").then(() => {
-    window.customElements.get(
-      "html-import"
-    ).prototype.replaceContent = replaceContent;
-  });
-}
+window.customElements.define("markdown-import", HTMLImportMarkdownElement);
 ```
 
-To run code on newly imported content each time the content changes, add a
-listener to the `importdone` event and modify the event's target content (that
-is, the content that has just been inserted into the `<html-import>` element in
-question) as needed:
+Instead of subclassing, you can always monkey patch the prototype and. Also, to
+run code on newly imported content each time the content changes, you can also
+add a listener to the `importdone` event and modify the event's target content
+(that is, the content that has just been inserted into the `<html-import>`
+element in question) as needed:
 
 ```javascript
 window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
@@ -273,5 +288,5 @@ window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
 
 ## Caveats
 
-* Because I'm a lazy linux-using slob this element has so far only been tested in Chrome and Firefox on Ubuntu.
-* If you use the [Polyfill](https://github.com/WebReflection/document-register-element) for `document-register-element`) (which you have to use if you want to support older browsers) you get a bunch of additional caveats (eg. when using innerHTML) for free.
+* Because I'm a lazy linux-using slob this element has so far only been tested
+  in Chrome and Firefox on Ubuntu.

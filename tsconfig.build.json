@@ -2,6 +2,6 @@
   "extends": "./tsconfig.json",
   "files": [
     "src/html-import.ts",
-    "src/html-import-markdown.ts",
+    "src/markdown-import.ts",
   ]
 }

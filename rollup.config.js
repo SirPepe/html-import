@@ -3,11 +3,13 @@ import { terser } from "rollup-plugin-terser";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 
+const extensions = [".ts", ".js"];
+
 const esmConfig = {
-  external: [/@babel\/runtime/, /core-js/, /marked/],
+  external: [/@babel\/runtime/, /core-js/, /marked/, /html-import/],
   plugins: [
     babel({
-      extensions: [".js", ".ts"],
+      extensions,
       babelHelpers: "runtime",
       exclude: "node_modules/**",
       presets: [
@@ -31,10 +33,10 @@ const esmConfig = {
 
 const minConfig = {
   plugins: [
-    nodeResolve(),
+    nodeResolve({ extensions }),
     commonjs(),
     babel({
-      extensions: [".js", ".ts"],
+      extensions,
       babelHelpers: "inline",
       exclude: "node_modules/**",
       presets: [
@@ -60,8 +62,8 @@ export default [
     ...esmConfig,
   },
   {
-    input: "src/html-import-markdown.ts",
-    output: { file: "esm/html-import-markdown.js", format: "esm" },
+    input: "src/markdown-import.ts",
+    output: { file: "esm/markdown-import.js", format: "esm" },
     ...esmConfig,
   },
   {
@@ -69,16 +71,17 @@ export default [
     output: {
       file: "dist/html-import.min.js",
       format: "iife",
-      name: "HTMLImportHTMLElement",
+      name: "HTMLHTMLImportElement",
       plugins: [terser()],
     },
     ...minConfig,
   },
   {
-    input: "src/html-import-markdown.ts",
+    input: "src/markdown-import.ts",
     output: {
-      file: "dist/html-import-markdown.min.js",
+      file: "dist/markdown-import.min.js",
       format: "iife",
+      name: "HTMLMarkdownImportElement",
       plugins: [terser()],
     },
     ...minConfig,

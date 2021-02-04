@@ -1,5 +1,5 @@
 type PromiseResponse = {
-  element: HTMLImportHTMLElement;
+  element: HTMLHTMLImportElement;
   title: string;
 };
 
@@ -84,7 +84,7 @@ function fixScripts(context: DocumentFragment, sourceUrl: string): void {
 }
 
 async function awaitNested(
-  imports: Iterable<HTMLImportHTMLElement>
+  imports: Iterable<HTMLHTMLImportElement>
 ): Promise<PromiseResponse[]> {
   const promises: Promise<PromiseResponse[]>[] = [];
   for (const importElement of imports) {
@@ -128,7 +128,7 @@ function extractContent(
   return { content, title: source.title };
 }
 
-export default class HTMLImportHTMLElement extends HTMLElement {
+export default class HTMLHTMLImportElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
   // current operation - AbortController is single-use anyway and so has to be
   // replaced for each request.
@@ -202,7 +202,7 @@ export default class HTMLImportHTMLElement extends HTMLElement {
   }
 
   public get [Symbol.toStringTag](): string {
-    return "HTMLImportHTMLElement";
+    return "HTMLHTMLImportElement";
   }
 
   static get observedAttributes(): string[] {
@@ -238,8 +238,9 @@ export default class HTMLImportHTMLElement extends HTMLElement {
     this.#updateTimeout = setTimeout(() => this.load(), 0);
   }
 
-  // Subclasses, extensions and tests may want to mess with this method
-  protected async fetch(url: string, signal: AbortSignal): Promise<string> {
+  // Subclasses, extensions and tests may want to mess with this method to
+  // implement their own loading logic.
+  public async fetch(url: string, signal: AbortSignal): Promise<string> {
     const response = await window.fetch(url, { signal });
     if (response.ok) {
       return await response.text();
@@ -248,8 +249,15 @@ export default class HTMLImportHTMLElement extends HTMLElement {
     }
   }
 
-  // Subclasses, extensions and tests may want to mess with this method
-  protected replaceContent(newContent: DocumentFragment): void {
+  // Subclasses, extensions and tests may want to mess with this method to
+  // manipulate the content that is about the get used.
+  public beforeReplaceContent(content: DocumentFragment): DocumentFragment {
+    return content;
+  }
+
+  // Subclasses, extensions and tests may want to mess with this method to
+  // change how content gets replaced by new content.
+  public replaceContent(newContent: DocumentFragment): void {
     this.innerHTML = "";
     this.append(newContent);
   }
@@ -267,9 +275,9 @@ export default class HTMLImportHTMLElement extends HTMLElement {
         new URL(this.src).hash
       );
       fixScripts(imported.content, this.src);
-      this.replaceContent(imported.content);
+      this.replaceContent(this.beforeReplaceContent(imported.content));
       const nested = await awaitNested(
-        $<HTMLImportHTMLElement>(this, "html-import")
+        $<HTMLHTMLImportElement>(this, "html-import")
       );
       this.setDone(
         [{ element: this, title: imported.title }, ...nested],
@@ -312,4 +320,4 @@ export default class HTMLImportHTMLElement extends HTMLElement {
   }
 }
 
-window.customElements.define("html-import", HTMLImportHTMLElement);
+window.customElements.define("html-import", HTMLHTMLImportElement);
