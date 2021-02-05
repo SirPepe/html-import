@@ -115,7 +115,7 @@ elements comes along.
 ## JavaScript API
 
 The JS API for `<html-import>` consists of a constructor function, three events,
-and three DOM properties.
+one method, and three DOM properties.
 
 ### Constructor
 
@@ -155,6 +155,14 @@ window.customElements.whenDefined("html-import").then(() => {
 All three events bubble and are not cancelable. Old-school attribute event
 handlers a la `<html-import onimportdone="...">` are not supported at the
 moment.
+
+### Properties
+
+`HTMLHTMLImportElement` implements a DOM method called `reload()` which you can
+use to cause a re-load without having to change any attributes or properties.
+The method takes no arguments and returns a promise that resolves to an array of
+imported elements and the imported document's titles (just like the promise
+returned by `done` as described below).
 
 ### Properties
 

@@ -227,6 +227,15 @@ export default class HTMLHTMLImportElement extends HTMLElement {
     }
   }
 
+  // Public method to trigger re-loads without changing src or selector
+  public async reload(): Promise<PromiseResponse[]> {
+    this.reset();
+    if (!this.src) {
+      return [];
+    }
+    return this.load();
+  }
+
   // Triggered when anything happens that requires a (re-)import, but debounces
   // the actual load process, mainly because attribute changes on custom
   // elements are, in contrast to mutation observers, not batched.
@@ -262,7 +271,7 @@ export default class HTMLHTMLImportElement extends HTMLElement {
     this.append(newContent);
   }
 
-  private async load(): Promise<void> {
+  private async load(): Promise<PromiseResponse[]> {
     this.#state = "loading";
     // this.#abortController may be replaced while the load function is in the
     // middle of its job. We need this reference to keep access the relevant
@@ -279,10 +288,9 @@ export default class HTMLHTMLImportElement extends HTMLElement {
       const nested = await awaitNested(
         $<HTMLHTMLImportElement>(this, "html-import")
       );
-      this.setDone(
-        [{ element: this, title: imported.title }, ...nested],
-        abortController
-      );
+      const result = [{ element: this, title: imported.title }, ...nested];
+      this.setDone(result, abortController);
+      return result;
     } catch (error) {
       this.setFail(error.name, abortController);
     }
