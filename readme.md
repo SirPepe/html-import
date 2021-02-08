@@ -156,7 +156,7 @@ All three events bubble and are not cancelable. Old-school attribute event
 handlers a la `<html-import onimportdone="...">` are not supported at the
 moment.
 
-### Properties
+### Methods
 
 `HTMLHTMLImportElement` implements a DOM method called `reload()` which you can
 use to cause a re-load without having to change any attributes or properties.
