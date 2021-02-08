@@ -1,7 +1,7 @@
 // Just to make everything feel ajax-like (that is, slow)
 window.customElements.whenDefined("html-import").then(() => {
-  const baseFetch = window.HTMLImportHTMLElement.prototype.fetch;
-  window.HTMLImportHTMLElement.prototype.fetch = function (...args) {
+  const baseFetch = window.HTMLHTMLImportElement.prototype.fetch;
+  window.HTMLHTMLImportElement.prototype.fetch = function (...args) {
     return new Promise((res) => setTimeout(() => res(baseFetch(...args)), 500));
   };
 });
