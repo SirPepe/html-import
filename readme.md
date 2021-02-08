@@ -67,10 +67,10 @@ reactive feel to old-school HTML/CMS-based projects (see
 
 ## License
 
-`<html-import>` is made available under the
-[GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) for open-source
-and personal projects. [Talk to me](https://www.peterkroener.de/kontakt/) if you
-want to use it for something else.
+`<html-import>` is dual-licensed:
+
+* For open-source and personal projects [GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) applies. Download the software and do what you want, as long as derivative work is licensed under an equivalent license.
+* If you want to use `<html-import>` for something else [just talk to me](https://www.peterkroener.de/kontakt/) and we can figure something out.
 
 ## Usage in HTML
 

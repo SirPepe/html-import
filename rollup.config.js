@@ -1,7 +1,13 @@
 import { babel } from "@rollup/plugin-babel";
 import { terser } from "rollup-plugin-terser";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import license from "rollup-plugin-license";
 import commonjs from "@rollup/plugin-commonjs";
+
+const banner = {
+  content: "<html-import> | Copyright (C) 2021 Peter Kröner | GPL-3.0-only",
+  commentStyle: "ignored",
+};
 
 const extensions = [".ts", ".js"];
 
@@ -58,12 +64,20 @@ const minConfig = {
 export default [
   {
     input: "src/html-import.ts",
-    output: { file: "esm/html-import.js", format: "esm" },
+    output: {
+      file: "esm/html-import.js",
+      format: "esm",
+      plugins: [license({ banner })],
+    },
     ...esmConfig,
   },
   {
     input: "src/markdown-import.ts",
-    output: { file: "esm/markdown-import.js", format: "esm" },
+    output: {
+      file: "esm/markdown-import.js",
+      format: "esm",
+      plugins: [license({ banner })],
+    },
     ...esmConfig,
   },
   {
@@ -72,7 +86,7 @@ export default [
       file: "dist/html-import.min.js",
       format: "iife",
       name: "HTMLHTMLImportElement",
-      plugins: [terser()],
+      plugins: [terser(), license({ banner })],
     },
     ...minConfig,
   },
@@ -82,7 +96,7 @@ export default [
       file: "dist/markdown-import.min.js",
       format: "iife",
       name: "HTMLMarkdownImportElement",
-      plugins: [terser()],
+      plugins: [terser(), license({ banner })],
     },
     ...minConfig,
   },

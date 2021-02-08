@@ -1,3 +1,7 @@
+/*!
+ * <html-import> | Copyright (C) 2021 Peter Kröner | GPL-3.0-only
+ */
+
 type PromiseResponse = {
   element: HTMLHTMLImportElement;
   title: string;
