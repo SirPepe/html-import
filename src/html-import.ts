@@ -277,6 +277,7 @@ export default class HTMLHTMLImportElement extends HTMLElement {
 
   private async load(): Promise<PromiseResponse[]> {
     this.#state = "loading";
+    this.dispatchEvent(new Event("importstart", { bubbles: true }));
     // this.#abortController may be replaced while the load function is in the
     // middle of its job. We need this reference to keep access the relevant
     // promise triggers for when the operation completes.

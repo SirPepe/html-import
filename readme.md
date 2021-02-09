@@ -114,7 +114,7 @@ elements comes along.
 
 ## JavaScript API
 
-The JS API for `<html-import>` consists of a constructor function, three events,
+The JS API for `<html-import>` consists of a constructor function, four events,
 one method, and three DOM properties.
 
 ### Constructor
@@ -144,15 +144,17 @@ window.customElements.whenDefined("html-import").then(() => {
 
 ### Events
 
-`HTMLHTMLImportElement` can fire three events:
+`HTMLHTMLImportElement` can fire four events:
 
+* `importstart`: Fires when the element starts to load content, e.g. after a
+  change to the attributes `src` or `selector` or after `load()` was called.
 * `importdone`: Fires when the element has imported content
 * `importfail` Fires when importing content has failed (e.g. due to 404).
   Implements a property `detail` that contains the reason for the failure.
 * `importabort` Fires when the element was about to import content, but got
   interrupted (e.g. by a new `src` value) before it could finish
 
-All three events bubble and are not cancelable. Old-school attribute event
+All four events bubble and are not cancelable. Old-school attribute event
 handlers a la `<html-import onimportdone="...">` are not supported at the
 moment.
 
