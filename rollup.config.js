@@ -12,13 +12,7 @@ const banner = {
 const extensions = [".ts", ".js"];
 
 const esmConfig = {
-  external: [
-    /@sirpepe\/oneventmixin/,
-    /@babel\/runtime/,
-    /core-js/,
-    /marked/,
-    /html-import/,
-  ],
+  external: [/@sirpepe\/oneventmixin/, /@babel\/runtime/, /core-js/],
   plugins: [
     babel({
       extensions,
@@ -78,30 +72,11 @@ export default [
     ...esmConfig,
   },
   {
-    input: "src/markdown-import.ts",
-    output: {
-      file: "esm/markdown-import.js",
-      format: "esm",
-      plugins: [license({ banner })],
-    },
-    ...esmConfig,
-  },
-  {
     input: "src/html-import.ts",
     output: {
       file: "dist/html-import.min.js",
       format: "iife",
       name: "HTMLHTMLImportElement",
-      plugins: [terser(), license({ banner })],
-    },
-    ...minConfig,
-  },
-  {
-    input: "src/markdown-import.ts",
-    output: {
-      file: "dist/markdown-import.min.js",
-      format: "iife",
-      name: "HTMLMarkdownImportElement",
       plugins: [terser(), license({ banner })],
     },
     ...minConfig,
