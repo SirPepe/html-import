@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "files": [
-    "src/html-import.ts",
-    "src/markdown-import.ts",
-  ]
-}

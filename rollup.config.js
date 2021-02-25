@@ -66,7 +66,7 @@ export default [
   {
     input: "src/html-import.ts",
     output: {
-      file: "esm/html-import.js",
+      file: "dist/esm/html-import.js",
       format: "esm",
       plugins: [license({ banner })],
     },
@@ -75,8 +75,8 @@ export default [
   {
     input: "src/html-import.ts",
     output: {
-      file: "dist/html-import.min.js",
-      format: "iife",
+      file: "dist/min/html-import.min.js",
+      format: "umd",
       name: "HTMLHTMLImportElement",
       plugins: [terser(), license({ banner })],
     },

@@ -5,10 +5,12 @@
   "main": "dist/html-import.min.js",
   "scripts": {
     "build": "rollup -c",
-    "build:dev": "tsc -w -p tsconfig.build.json",
+    "build-dev": "tsc -w -p tsconfig.build.json",
+    "build-declarations": "tsc src/html-import.ts --moduleResolution node --target esnext -d --emitDeclarationOnly --declarationDir .",
     "lint": "eslint src",
     "test": "karma start --single-run",
-    "test:dev": "karma start"
+    "test-dev": "karma start",
+    "prepareRelease": "rm -rf node_modules && npm install && npm run build && npm run build-declarations && npm run test"
   },
   "directories": {
     "test": "test"
@@ -30,7 +32,6 @@
     "@rollup/plugin-commonjs": "^17.1.0",
     "@rollup/plugin-node-resolve": "^11.1.1",
     "@types/jasmine": "^3.6.3",
-    "@types/marked": "^1.2.2",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "eslint": "^7.18.0",
@@ -51,7 +52,6 @@
   "dependencies": {
     "@babel/runtime": "^7.12.5",
     "@sirpepe/oneventmixin": "0.0.2",
-    "core-js": "^3.8.3",
-    "marked": "^1.2.8"
+    "core-js": "^3.8.3"
   }
 }
