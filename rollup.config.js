@@ -5,7 +5,8 @@ import license from "rollup-plugin-license";
 import commonjs from "@rollup/plugin-commonjs";
 
 const banner = {
-  content: "<html-import> | Copyright (C) 2021 Peter Kröner | GPL-3.0-only",
+  content:
+    "<html-import> | Copyright (C) 2021 Peter Kröner | peter@peterkroener.de | Dual license GPL-3.0-only/commercial",
   commentStyle: "ignored",
 };
 

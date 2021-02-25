@@ -1,7 +1,3 @@
-/*!
- * <html-import> | Copyright (C) 2021 Peter Kröner | GPL-3.0-only
- */
-
 import OnEventMixin from "@sirpepe/oneventmixin";
 
 type PromiseResponse = {
