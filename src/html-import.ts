@@ -2,6 +2,8 @@
  * <html-import> | Copyright (C) 2021 Peter Kröner | GPL-3.0-only
  */
 
+import OnEventMixin from "@sirpepe/oneventmixin";
+
 type PromiseResponse = {
   element: HTMLHTMLImportElement;
   title: string;
@@ -132,7 +134,7 @@ function extractContent(
   return { content, title: source.title };
 }
 
-export default class HTMLHTMLImportElement extends HTMLElement {
+class HTMLHTMLImportElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
   // current operation - AbortController is single-use anyway and so has to be
   // replaced for each request.
@@ -333,4 +335,11 @@ export default class HTMLHTMLImportElement extends HTMLElement {
   }
 }
 
-window.customElements.define("html-import", HTMLHTMLImportElement);
+class HTMLHTMLImportElementWithEvents extends OnEventMixin(
+  HTMLHTMLImportElement,
+  ["importstart", "importdone", "importdone", "importabort"]
+) {}
+
+export { HTMLHTMLImportElementWithEvents as default };
+
+window.customElements.define("html-import", HTMLHTMLImportElementWithEvents);

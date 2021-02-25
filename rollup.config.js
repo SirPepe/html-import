@@ -12,7 +12,13 @@ const banner = {
 const extensions = [".ts", ".js"];
 
 const esmConfig = {
-  external: [/@babel\/runtime/, /core-js/, /marked/, /html-import/],
+  external: [
+    /@sirpepe\/oneventmixin/,
+    /@babel\/runtime/,
+    /core-js/,
+    /marked/,
+    /html-import/,
+  ],
   plugins: [
     babel({
       extensions,

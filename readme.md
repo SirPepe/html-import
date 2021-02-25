@@ -154,9 +154,9 @@ window.customElements.whenDefined("html-import").then(() => {
 * `importabort` Fires when the element was about to import content, but got
   interrupted (e.g. by a new `src` value) before it could finish
 
-All four events bubble and are not cancelable. Old-school attribute event
-handlers a la `<html-import onimportdone="...">` are not supported at the
-moment.
+All four events bubble and are not cancelable. Not that you can use old-school
+attribute event handlers a la `<html-import onimportdone="...">` in addition to
+`addEventListener()`.
 
 ### Methods
 
