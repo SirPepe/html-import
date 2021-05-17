@@ -168,7 +168,7 @@ Clicks on the navigation links update the `<html-import>` element's `src` attrib
 
 Check out `demo/staticsite` to see this principle in action.
 
-### Customize
+### Customize, subclass and monkey patch
 
 You can easily customize the element's behavior by subclassing or monkey patching `HTMLHTMLImportElement`. Three methods on the `HTMLHTMLImportElement` class are hooks for extensions:
 
@@ -183,11 +183,11 @@ import marked from "marked";
 import HTMLHTMLImportElement from "html-import";
 
 export default class HTMLImportMarkdownElement extends HTMLHTMLImportElement {
-  public get [Symbol.toStringTag]() {
+  get [Symbol.toStringTag]() {
     return "HTMLMarkdownImportElement";
   }
 
-  public beforeReplaceContent(content) {
+  beforeReplaceContent(content) {
     const contentContainer = this.ownerDocument.createElement("template");
     let html = "";
     for (const node of content.childNodes) {
@@ -205,7 +205,23 @@ export default class HTMLImportMarkdownElement extends HTMLHTMLImportElement {
 window.customElements.define("markdown-import", HTMLImportMarkdownElement);
 ```
 
-Instead of subclassing, you can always monkey patch the prototype. Also, to run code on newly imported content each time the content changes, you can also add a listener to the `importdone` event and modify the event's target content (that is, the content that has just been inserted into the `<html-import>` element in question) as needed:
+Instead of subclassing, you can always monkey patch the prototype. If, for example, you'd like to place the imported content in a shadow tree, just overwrite `replaceContent()` like this:
+
+```javascript
+HTMLHTMLImportElement.prototype.replaceContent = function(newContent) {
+    if (!this.shadowRoot) {
+      this.shadowRoot = this.attachShadow({ mode: "open" });
+    } else {
+      this.shadowRoot.innerHTML = "";
+    }
+    this.shadowRoot.append(newContent);
+  }
+});
+```
+
+Try `demo/monkeypatch/index.html` to see this hack in action!
+
+To run code on newly imported content each time the content changes, you can also add a listener to the `importdone` event and modify the event's target content (that is, the content that has just been inserted into the `<html-import>` element in question) as needed:
 
 ```javascript
 window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
