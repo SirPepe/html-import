@@ -33,7 +33,7 @@
 
 Notable features:
 
-* Import whatever you like; plain HTML elements, style and link elements and even script elements work. Non-blocking scripts in imported HTML files work as expected. Blocking scripts will be executed asynchronously, and thus may cause unintended effects.
+* Import whatever you like; plain HTML elements, style and link elements and even script elements work. Non-blocking scripts (script elements with `async`, `defer` or `type="module"`) in imported HTML files work as expected. Blocking scripts will be executed asynchronously, and thus may cause unintended effects.
 * Nest imports to your heart's content (as long as there's no circular imports)
 * Optionally filter imported elements by selector with an additional attribute: `<html-import src="a.html" selector=".foo"></html-import>`. Fragments also: work for this: `<html-import src="a.html#foo"></html-import>`.
 * Reactive imports - updating the `src` or `selector` attributes replaces already imported content with new content as specified by the attributes
@@ -59,10 +59,10 @@ The element has two important HTML attributes:
 
 If a selector has been defined *and* if the `src` attribute contains a url with a fragment identifier, the element will import only the fragment target if it also matches the selector. In summary:
 
-* no selector, no hash in URL = entire body contents
-* selector, no hash in URL = all elements matching the selector
-* no selector, hash in URL = first element matching the hash
-* selector and hash in URL = first element matching the hash if it that also matches selector
+* no selector, no fragment in URL = entire body contents
+* selector, no fragment in URL = all elements matching the selector
+* no selector, fragment in URL = first element matching the fragment
+* selector and fragment in URL = first element matching the fragment if it that also matches selector
 
 The element performs `fetch()` requests under the hood. Once such a request has finished, the element's contents get replaced by whatever was requested (optionally filtered by the selector). The content between an `<html-import>` element's tags thus serves as both its initial content and its fallback content in case some scripts break or an ancient browser without support for custom elements comes along.
 
@@ -102,7 +102,7 @@ window.customElements.whenDefined("html-import").then(() => {
 * `importfail` Fires when importing content has failed (e.g. due to 404). The event object implements a property `detail` that contains the reason for the failure.
 * `importabort` Fires when the element was about to import content, but got interrupted (e.g. by a new `src` value) before it could finish
 
-All four events bubble and are not cancelable. Not that you can use old-school attribute event handlers a la `<html-import onimportdone="...">` in addition to `addEventListener()`.
+All four events bubble and are not cancelable. Not that you can use old-school attribute event handlers a la `<html-import onimportdone="...">` in addition to `addEventListener()`, all thanks to [@sirpepe/oneventmixin](https://www.npmjs.com/package/@sirpepe/oneventmixin).
 
 #### Methods
 
@@ -166,7 +166,7 @@ Any change to the attributes `src` or `selector` causes the imported content to 
 
 Clicks on the navigation links update the `<html-import>` element's `src` attribute, which causes it to load the respective page, extract the content from the `<html-import>` element from there and dump it into this page's `<html-import>` element. Add a little extra JS for routing and your whole page suddenly feels like a SPA - when all you needed to do was to wrap every page's main content in `<html-import>` and write about 50 lines of JavaScript to intercept clicks and manage the navigation history. If something breaks or an ancient browser comes along, your project will still work via traditional page loads.
 
-Check out `demo/staticsite` to see this principle in action.
+Check out `demo/staticsite/index.html` to see this principle in action.
 
 ### Customize, subclass and monkey patch
 
@@ -209,14 +209,13 @@ Instead of subclassing, you can always monkey patch the prototype. If, for examp
 
 ```javascript
 HTMLHTMLImportElement.prototype.replaceContent = function(newContent) {
-    if (!this.shadowRoot) {
-      this.shadowRoot = this.attachShadow({ mode: "open" });
-    } else {
-      this.shadowRoot.innerHTML = "";
-    }
-    this.shadowRoot.append(newContent);
+  if (!this.shadowRoot) {
+    this.shadowRoot = this.attachShadow({ mode: "open" });
+  } else {
+    this.shadowRoot.innerHTML = "";
   }
-});
+  this.shadowRoot.append(newContent);
+}
 ```
 
 Try `demo/monkeypatch/index.html` to see this hack in action!
