@@ -1,7 +1,7 @@
 {
   "name": "html-import",
   "version": "2.0.0",
-  "description": "If you know PHP, it's basically include() for HTML",
+  "description": "Custom element that works like include() or #include, but for HTML",
   "main": "dist/html-import.min.js",
   "scripts": {
     "build": "rollup -c",
