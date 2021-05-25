@@ -1,8 +1,0 @@
-[ignore]
-
-[include]
-src/html-import.js
-
-[libs]
-
-[options]

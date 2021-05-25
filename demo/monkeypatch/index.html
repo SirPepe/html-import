@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Monkey patch the prototype</title>
+<script src="../../dist/min/html-import.min.js"></script>
+<script>
+  window.customElements.whenDefined("html-import").then(() => {
+    window.HTMLHTMLImportElement.prototype.replaceContent = function(newContent) {
+      if (!this.shadowRoot) {
+        this.shadowRoot = this.attachShadow({ mode: "open" });
+      } else {
+        this.shadowRoot.innerHTML = "";
+      }
+      this.shadowRoot.append(newContent);
+    }
+  });
+</script>
+
+<html-import src="content.html"></html-import>
