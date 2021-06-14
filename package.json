@@ -1,8 +1,11 @@
 {
-  "name": "html-import",
-  "version": "2.0.0",
+  "name": "@sirpepe/html-import",
+  "version": "0.0.0",
   "description": "Custom element that works like include() in PHP or #include in C, but for HTML",
-  "main": "dist/html-import.min.js",
+  "main": "dist/min/html-import.min.js",
+  "module": "dist/esm/html-import.js",
+  "browser": "dist/min/html-import.min.js",
+  "types": "html-import.d.ts",
   "scripts": {
     "build": "rollup -c",
     "build-dev": "tsc -w -p tsconfig.build.json",
@@ -10,10 +13,14 @@
     "lint": "eslint src",
     "test": "karma start --single-run",
     "test-dev": "karma start",
-    "prepareRelease": "rm -rf node_modules && npm install && npm run build && npm run build-declarations && npm run test"
+    "prepareRelease": "rm -rf node_modules && npm install && npm run build && npm run build-declarations && npm run test",
+    "release": "npm run prepareRelease && release-it"
   },
   "directories": {
     "test": "test"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": "git+https://github.com/SirPepe/html-import.git",
   "author": "peter@peterkroener.de",
@@ -44,6 +51,7 @@
     "karma-typescript": "^5.5.1",
     "karma-typescript-es6-transform": "^5.5.1",
     "prettier": "^2.3.1",
+    "release-it": "^14.9.0",
     "rollup": "^2.51.2",
     "rollup-plugin-license": "^2.5.0",
     "rollup-plugin-terser": "^7.0.2",

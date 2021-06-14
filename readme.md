@@ -1,6 +1,12 @@
 # &lt;html-import&gt;
 
-**Custom HTML element for importing HTML documents (or parts of documents) into other HTML documents on the fly!** It works similar to `include()` in PHP, `import` in JavaScript or `#include` in C/C++, but for HTML content. Examples:
+**Custom HTML element for importing HTML documents (or parts of documents) into other HTML documents on the fly!** It works similar to `include()` in PHP, `import` in JavaScript or `#include` in C/C++, but for HTML content. Just install the package...
+
+```
+$ npm install @sirpepe/html-import
+```
+
+... load the module or the minified bundle and then use `<html-import src>` in your HTML:
 
 ```html
 <!-- Importing body content -->
