@@ -26,10 +26,7 @@ module.exports = (config) => {
       compilerOptions: {
         target: "ES2015",
         allowSyntheticDefaultImports: true,
-      },
-      bundlerOptions: {
-        transforms: [require("karma-typescript-es6-transform")()],
-      },
+      }
     },
     reporters: ["progress", "karma-typescript"],
     port: 9876,
@@ -38,6 +35,5 @@ module.exports = (config) => {
     autoWatch: true,
     browsers: ["ChromeHeadless", "FirefoxHeadless"],
     singleRun: false,
-    concurrency: Infinity,
   });
 };
