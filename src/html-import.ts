@@ -81,7 +81,7 @@ function fixScripts(context: DocumentFragment, sourceUrl: string): void {
       clone.attributes.setNamedItem(attribute.cloneNode() as Attr);
     }
     insertAfter(script, clone);
-    context.removeChild(script);
+    script.remove();
   }
 }
 

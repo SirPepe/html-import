@@ -277,6 +277,15 @@ describe("scripts", () => {
     expect(element.firstElementChild.className).toBe("foo");
   });
 
+  it("executes imported scripts nested in other elements", async () => {
+    const element = new HTMLHTMLImportElement(
+      "/base/test/resources/scriptedContentNested.html"
+    );
+    fixture.append(element);
+    await element.done;
+    expect(element.firstElementChild.className).toBe("foo");
+  });
+
   it("eventually executes linked imported scripts", async () => {
     const element = new HTMLHTMLImportElement(
       "/base/test/resources/externalScriptedContent.html"
