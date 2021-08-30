@@ -232,6 +232,11 @@ To run code on newly imported content each time the content changes, you can als
 window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
 ```
 
+### Changelog
+
+* **2.0.1**: Fix a bug that prevented scripts that were nested in other elements from being imported properly
+* **2.0.0**: Complete rewrite
+
 ### Caveats
 
 * Because I'm a lazy linux-using slob this element has so far only been tested in Chrome and Firefox on Ubuntu.
