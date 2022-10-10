@@ -2,7 +2,7 @@
 
 **Custom HTML element for importing HTML documents (or parts of documents) into other HTML documents on the fly!** It works similar to `include()` in PHP, `import` in JavaScript or `#include` in C/C++, but for HTML content. Just install the package...
 
-```
+```shell
 $ npm install @sirpepe/html-import
 ```
 
@@ -41,7 +41,7 @@ Notable features:
 
 * Import whatever you like; plain HTML elements, style and link elements and even script elements work. Non-blocking scripts (script elements with `async`, `defer` or `type="module"`) in imported HTML files work as expected. Blocking scripts will be executed asynchronously, and thus may cause unintended effects.
 * Nest imports to your heart's content (as long as there's no circular imports)
-* Optionally filter imported elements by selector with an additional attribute: `<html-import src="a.html" selector=".foo"></html-import>`. Fragments also: work for this: `<html-import src="a.html#foo"></html-import>`.
+* Optionally filter imported elements by selector with an additional attribute: `<html-import src="a.html" selector=".foo"></html-import>`. Fragments also work: `<html-import src="a.html#foo"></html-import>`.
 * Reactive imports - updating the `src` or `selector` attributes replaces already imported content with new content as specified by the attributes
 * Does not require on any frameworks, libraries or build tools! You can use the ESM version of this component with your favorite module bundler or just drop the minified version right into your web project.
 * Easy to customize through subclassing, monkey patching or events handlers.
@@ -74,7 +74,7 @@ The element performs `fetch()` requests under the hood. Once such a request has 
 
 ### JavaScript API
 
-The JS API for `<html-import>` consists of a constructor function, four events, one method, and three DOM properties (plus DOM Properties for event handlers).
+The JS API for `<html-import>` consists of a constructor function, four events, one method, and four DOM properties (plus DOM Properties for event handlers).
 
 #### Constructor
 
@@ -116,11 +116,12 @@ All four events bubble and are not cancelable. Not that you can use old-school a
 
 #### Properties
 
-`HTMLHTMLImportElement` implements seven DOM properties:
+`HTMLHTMLImportElement` implements eight DOM properties:
 
 * `src` reflects the `src` HTML attribute. Can be used as a setter to change the `src` value. As a getter, it always returns absolute URLs, even when the HTML attribute is relative (just like a `<a>` element's `href` attribute). Returns the empty string when there's no `src` set.
 * `selector` reflects the `selector` HTML attribute. Can be used as a setter to change the `selector` value.
 * `done` which returns a promise for that resolves when the element's target document has been loaded. Note that `done` returns a new promise each time you access the property, with the promise reflecting the then-current loading operation each time.
+* `verbose` can be set to false to keep the element from notifying you about synchronous scripts that, due to being imported, are now executing synchronously.
 * `onstart`, `ondone`, `onfail` and `onabort` event handlers
 
 ```javascript
@@ -234,6 +235,7 @@ window.addEventListener("importdone", (evt) => doStuff(evt.target.children));
 
 ### Changelog
 
+* **2.1.0**: Add `verbose` property
 * **2.0.1**: Fix a bug that prevented scripts that were nested in other elements from being imported properly
 * **2.0.0**: Complete rewrite
 
