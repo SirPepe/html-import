@@ -4,6 +4,7 @@ declare type PromiseResponse = {
 };
 declare class HTMLHTMLImportElement extends HTMLElement {
     #private;
+    verbose: boolean;
     constructor(src?: string, selector?: string);
     private reset;
     private setDone;
