@@ -67,10 +67,14 @@ function matchAncestor(element: Element, selector: string): Element | null {
 // turns them asynchronous, so we issue a warning if the scripts were not
 // originally meant to execute asynchronously. Also screw TypeScript for having
 // Attr extend Node, but also having Node.cloneNode() return Node.
-function fixScripts(context: DocumentFragment, sourceUrl: string): void {
+function fixScripts(
+  context: DocumentFragment,
+  sourceUrl: string,
+  verbose: boolean
+): void {
   const scripts = context.querySelectorAll("script");
   for (const script of scripts) {
-    if (!isAsyncByDesign(script)) {
+    if (verbose && !isAsyncByDesign(script)) {
       warn(
         `An formerly blocking script in ${sourceUrl} has been imported by html-import and is now executing asynchronously`
       );
@@ -149,6 +153,9 @@ class HTMLHTMLImportElement extends HTMLElement {
   // for custom elements (in contrast to attribute changes in MutationObserver).
   #updateTimeout: NodeJS.Timeout | undefined = undefined;
 
+  // Can be set to false to silence the console reporting on async scrips
+  verbose = true;
+
   constructor(src?: string, selector?: string) {
     super();
     if (src) {
@@ -191,7 +198,7 @@ class HTMLHTMLImportElement extends HTMLElement {
   // but rather a orderly reset/shutdown.
   private setFail(reason: any, controller: AbortController): void {
     const callbacks = this.#callbacks.get(controller) || [];
-    if (reason === "AbortError") {
+    if (reason.startsWith("AbortError")) {
       this.dispatchEvent(new Event("importabort", { bubbles: true }));
       this.#state = "none";
     } else {
@@ -235,7 +242,7 @@ class HTMLHTMLImportElement extends HTMLElement {
     if (!this.src) {
       return [];
     }
-    return this.load();
+    return (await this.load()) ?? [];
   }
 
   // Triggered when anything happens that requires a (re-)import, but debounces
@@ -273,7 +280,7 @@ class HTMLHTMLImportElement extends HTMLElement {
     this.append(newContent);
   }
 
-  private async load(): Promise<PromiseResponse[]> {
+  private async load(): Promise<PromiseResponse[] | undefined> {
     this.#state = "loading";
     this.dispatchEvent(new Event("importstart", { bubbles: true }));
     // this.#abortController may be replaced while the load function is in the
@@ -286,7 +293,7 @@ class HTMLHTMLImportElement extends HTMLElement {
         this.selector,
         new URL(this.src).hash
       );
-      fixScripts(imported.content, this.src);
+      fixScripts(imported.content, this.src, this.verbose);
       this.replaceContent(this.beforeReplaceContent(imported.content));
       const nested = await awaitNested(
         $<HTMLHTMLImportElement>(this, "html-import")
@@ -296,7 +303,6 @@ class HTMLHTMLImportElement extends HTMLElement {
       return result;
     } catch (error) {
       this.setFail(String(error), abortController);
-      throw error;
     }
   }
 

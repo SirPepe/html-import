@@ -10,7 +10,7 @@ const slowdown = (element: HTMLHTMLImportElement): void => {
     signal: AbortSignal
   ): Promise<string> =>
     wait(100).then(() =>
-      (HTMLHTMLImportElement.prototype as any).fetch.call(element, url, signal)
+      HTMLHTMLImportElement.prototype.fetch.call(element, url, signal)
     );
 };
 
@@ -95,57 +95,57 @@ describe("use via innerHTML", () => {
 
   it("imports a whole file", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`);
   });
 
   it("imports a whole file with text nodes", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/contentWithText.html"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`Hello\n<p id="lorem">Lorem</p>\nWorld\n<p id="ipsum">Ipsum</p>\n`);
   });
 
   it("imports only elements matching the hash", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
 
   it("imports only select elements", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html" selector="#ipsum"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
 
   it("imports only select elements that also match the hash", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum" selector="#ipsum"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
 
   it("does not import elements that do not match the hash", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html#ipsum" selector="p"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p id="ipsum">Ipsum</p>`);
   });
 
   it("imports only top-most select elements", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/nestedContent.html" selector=".foo"></html-import>`;
-    await fixture.querySelector<HTMLHTMLImportElement>("html-import").done;
+    await fixture.querySelector<HTMLHTMLImportElement>("html-import")?.done;
     expect(
-      fixture.querySelector<HTMLHTMLImportElement>("html-import").innerHTML
+      fixture.querySelector<HTMLHTMLImportElement>("html-import")?.innerHTML
     ).toBe(`<p class="foo"><span class="foo">Lorem</span></p>`);
   });
 });
@@ -157,7 +157,9 @@ describe("JS API", () => {
 
   it("delivers a new promise from 'done' each time and fires done events", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
-    const element = fixture.querySelector<HTMLHTMLImportElement>("html-import");
+    const element = fixture.querySelector(
+      "html-import"
+    ) as HTMLHTMLImportElement;
     const eventCallback = jasmine.createSpy();
     element.addEventListener("importdone", eventCallback);
     const a = element.done;
@@ -173,23 +175,29 @@ describe("JS API", () => {
 
   it("fires abort events and never fulfills outdated promises", async () => {
     fixture.innerHTML = `<html-import src="/base/test/resources/content.html"></html-import>`;
-    const element = fixture.querySelector<HTMLHTMLImportElement>("html-import");
+    const element = fixture.querySelector(
+      "html-import"
+    ) as HTMLHTMLImportElement;
     slowdown(element);
     const a = element.done;
-    const promiseCallback = jasmine.createSpy();
-    a.then(promiseCallback, promiseCallback); // neither should happen on abort
-    const eventCallback = jasmine.createSpy();
-    element.addEventListener("importabort", eventCallback);
+    const abortEventCallback = jasmine.createSpy("event");
+    const promiseDoneCallback = jasmine.createSpy("done");
+    const promiseFailCallback = jasmine.createSpy("fail");
+    a.then(promiseDoneCallback, promiseFailCallback); // neither should happen on abort
+    element.addEventListener("importabort", abortEventCallback);
     await wait(20); // allow debounce to happen after attribute change
     element.src = "/base/test/resources/content2.html"; // make "a" moot
     await element.done;
-    expect(promiseCallback).toHaveBeenCalledTimes(0);
-    expect(eventCallback).toHaveBeenCalledTimes(1);
+    expect(promiseDoneCallback).toHaveBeenCalledTimes(0);
+    expect(promiseFailCallback).toHaveBeenCalledTimes(0);
+    expect(abortEventCallback).toHaveBeenCalledTimes(1);
   });
 
   it("fires fail events and rejects promises", async () => {
     fixture.innerHTML = `<html-import></html-import>`;
-    const element = fixture.querySelector<HTMLHTMLImportElement>("html-import");
+    const element = fixture.querySelector(
+      "html-import"
+    ) as HTMLHTMLImportElement;
     element.src = "/404";
     const thenCallback = jasmine.createSpy("then");
     const catchCallback = jasmine.createSpy("catch");
@@ -274,7 +282,7 @@ describe("scripts", () => {
     );
     fixture.append(element);
     await element.done;
-    expect(element.firstElementChild.className).toBe("foo");
+    expect(element.firstElementChild?.className).toBe("foo");
   });
 
   it("executes imported scripts nested in other elements", async () => {
@@ -283,7 +291,7 @@ describe("scripts", () => {
     );
     fixture.append(element);
     await element.done;
-    expect(element.firstElementChild.className).toBe("foo");
+    expect(element.firstElementChild?.className).toBe("foo");
   });
 
   it("eventually executes linked imported scripts", async () => {
@@ -293,7 +301,7 @@ describe("scripts", () => {
     fixture.append(element);
     await element.done;
     await wait(100); // script turned async
-    expect(element.firstElementChild.className).toBe("foo");
+    expect(element.firstElementChild?.className).toBe("foo");
   });
 
   it("does not execute scripts that were not imported", async () => {
@@ -303,6 +311,6 @@ describe("scripts", () => {
     );
     fixture.append(element);
     await element.done;
-    expect(element.firstElementChild.className).toBe("");
+    expect(element.firstElementChild?.className).toBe("");
   });
 });
