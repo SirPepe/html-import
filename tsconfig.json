@@ -3,9 +3,12 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "coverage",
+    "dist"
   ]
 }

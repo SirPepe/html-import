@@ -93,7 +93,7 @@ async function awaitNested(
     promises.push(importElement.done);
   }
   const responses = await Promise.all(promises);
-  return [].concat(...responses);
+  return responses.flat();
 }
 
 // no selector, no hash = entire body contents
@@ -295,7 +295,8 @@ class HTMLHTMLImportElement extends HTMLElement {
       this.setDone(result, abortController);
       return result;
     } catch (error) {
-      this.setFail(error.name, abortController);
+      this.setFail(String(error), abortController);
+      throw error;
     }
   }
 

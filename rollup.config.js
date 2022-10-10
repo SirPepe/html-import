@@ -30,10 +30,7 @@ const esmConfig = {
         ],
         "@babel/preset-typescript",
       ],
-      plugins: [
-        "@babel/plugin-proposal-class-properties",
-        "@babel/plugin-transform-runtime",
-      ],
+      plugins: ["@babel/plugin-transform-runtime"],
     }),
   ],
 };

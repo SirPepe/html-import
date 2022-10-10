@@ -26,7 +26,7 @@ module.exports = (config) => {
       compilerOptions: {
         target: "ES2015",
         allowSyntheticDefaultImports: true,
-      }
+      },
     },
     reporters: ["progress", "karma-typescript"],
     port: 9876,
