@@ -1,5 +1,16 @@
+/* eslint-env node */
+
 module.exports = (config) => {
   config.set({
+    // The custom launcher is a workaround for Firefox installed with snap on
+    // Ubuntu, see https://github.com/karma-runner/karma-firefox-launcher/issues/183
+    customLaunchers: {
+      FirefoxCustom: {
+        base: "Firefox",
+        flags: ["-headless"],
+        profile: module.require("path").join(__dirname, "tmp"),
+      },
+    },
     basePath: "",
     frameworks: ["jasmine", "karma-typescript"],
     files: [
@@ -33,7 +44,7 @@ module.exports = (config) => {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ["ChromeHeadless", "FirefoxHeadless"],
+    browsers: ["ChromeHeadless", "FirefoxCustom"],
     singleRun: false,
   });
 };

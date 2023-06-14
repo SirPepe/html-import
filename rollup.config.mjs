@@ -1,5 +1,5 @@
 import { babel } from "@rollup/plugin-babel";
-import { terser } from "rollup-plugin-terser";
+import terser from "@rollup/plugin-terser";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import license from "rollup-plugin-license";
 import commonjs from "@rollup/plugin-commonjs";
@@ -23,7 +23,7 @@ const esmConfig = {
         [
           "@babel/preset-env",
           {
-            targets: "defaults,not ie 11",
+            targets: "defaults,not dead",
             useBuiltIns: "usage",
             corejs: "3.8",
           },
@@ -54,7 +54,6 @@ const minConfig = {
         ],
         "@babel/preset-typescript",
       ],
-      plugins: ["@babel/plugin-proposal-class-properties"],
     }),
   ],
 };
