@@ -1,3 +1,5 @@
+import { define } from "@sirpepe/schleifchen";
+
 type PromiseResponse = {
   element: HTMLImportElement;
   title: string;
@@ -111,6 +113,7 @@ function extractContent(
   return { content, title: source.title };
 }
 
+@define("html-import")
 class HTMLImportElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
   // current operation - AbortController is single-use anyway and so has to be
@@ -308,6 +311,4 @@ class HTMLImportElement extends HTMLElement {
   }
 }
 
-export { HTMLImportElement as default };
-
-window.customElements.define("html-import", HTMLImportElement);
+export default HTMLImportElement;

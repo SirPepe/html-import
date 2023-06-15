@@ -23,6 +23,7 @@ const esmConfig = {
         [
           "@babel/preset-env",
           {
+            modules: false,
             targets: "defaults,not dead",
             useBuiltIns: "usage",
             corejs: "3.8",
@@ -30,7 +31,15 @@ const esmConfig = {
         ],
         "@babel/preset-typescript",
       ],
-      plugins: ["@babel/plugin-transform-runtime"],
+      plugins: [
+        ["@babel/plugin-transform-runtime"],
+        [
+          "@babel/plugin-proposal-decorators",
+          {
+            version: "2023-05",
+          },
+        ],
+      ],
     }),
   ],
 };
@@ -47,12 +56,21 @@ const minConfig = {
         [
           "@babel/preset-env",
           {
-            targets: "defaults,not ie 11",
+            modules: false,
+            targets: "defaults,not dead",
             useBuiltIns: "usage",
             corejs: "3.8",
           },
         ],
         "@babel/preset-typescript",
+      ],
+      plugins: [
+        [
+          "@babel/plugin-proposal-decorators",
+          {
+            version: "2023-05",
+          },
+        ],
       ],
     }),
   ],
@@ -73,7 +91,7 @@ export default [
     output: {
       file: "dist/min/html-import.min.js",
       format: "umd",
-      name: "HTMLHTMLImportElement",
+      name: "HTMLImportElement",
       plugins: [terser(), license({ banner })],
     },
     ...minConfig,
