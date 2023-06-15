@@ -103,7 +103,7 @@ function extractContent(
       }
     }
   } else {
-    const hashMatch = source.querySelector(hash);
+    const hashMatch = source.querySelector(hash); // basically getELementById()
     if (hashMatch && (!selector || hashMatch.matches(selector))) {
       content.append(hashMatch);
     }
@@ -144,7 +144,7 @@ class HTMLImportElement extends HTMLElement {
     this.#state = "none";
   }
 
-  private reset(): void {
+  #reset(): void {
     if (this.#updateTimeout) {
       clearTimeout(this.#updateTimeout);
     }
@@ -161,10 +161,7 @@ class HTMLImportElement extends HTMLElement {
     this.#state = "none";
   }
 
-  private setDone(
-    entries: PromiseResponse[],
-    controller: AbortController
-  ): void {
+  #setDone(entries: PromiseResponse[], controller: AbortController): void {
     const callbacks = this.#callbacks.get(controller) || [];
     this.dispatchEvent(new Event("importdone", { bubbles: true }));
     this.#state = "done";
@@ -173,7 +170,7 @@ class HTMLImportElement extends HTMLElement {
 
   // A special case of failure is the AbortError which is not really a "failure"
   // but rather a orderly reset/shutdown.
-  private setFail(reason: any, controller: AbortController): void {
+  #setFail(reason: any, controller: AbortController): void {
     const callbacks = this.#callbacks.get(controller) || [];
     if (reason.startsWith("AbortError")) {
       this.dispatchEvent(new Event("importabort", { bubbles: true }));
@@ -187,7 +184,7 @@ class HTMLImportElement extends HTMLElement {
     }
   }
 
-  public get [Symbol.toStringTag](): string {
+  get [Symbol.toStringTag](): string {
     return "HTMLHTMLImportElement";
   }
 
@@ -195,47 +192,43 @@ class HTMLImportElement extends HTMLElement {
     return ["src", "selector"];
   }
 
-  private connectedCallback() {
-    this.import();
+  connectedCallback() {
+    this.#import();
   }
 
-  private disconnectedCallback() {
-    this.reset();
+  disconnectedCallback() {
+    this.#reset();
   }
 
-  private attributeChangedCallback(
-    name: string,
-    oldValue: any,
-    newValue: any
-  ): void {
+  attributeChangedCallback(name: string, oldValue: any, newValue: any): void {
     if ((name === "src" || name === "selector") && oldValue !== newValue) {
-      this.import();
+      this.#import();
     }
   }
 
-  // Public method to trigger re-loads without changing src or selector
-  public async reload(): Promise<PromiseResponse[]> {
-    this.reset();
+  // Manually triggers a re-load without changing src or selector
+  async reload(): Promise<PromiseResponse[]> {
+    this.#reset();
     if (!this.src) {
       return [];
     }
-    return (await this.load()) ?? [];
+    return (await this.#load()) ?? [];
   }
 
   // Triggered when anything happens that requires a (re-)import, but debounces
   // the actual load process, mainly because attribute changes on custom
   // elements are, in contrast to mutation observers, not batched.
-  private import(): void {
-    this.reset();
+  #import(): void {
+    this.#reset();
     if (!this.src) {
       return;
     }
-    this.#updateTimeout = setTimeout(() => this.load(), 0);
+    this.#updateTimeout = setTimeout(() => this.#load(), 0);
   }
 
   // Subclasses, extensions and tests may want to mess with this method to
   // implement their own loading logic.
-  public async fetch(url: string, signal: AbortSignal): Promise<string> {
+  async fetch(url: string, signal: AbortSignal): Promise<string> {
     const response = await window.fetch(url, { signal });
     if (response.ok) {
       return await response.text();
@@ -246,18 +239,18 @@ class HTMLImportElement extends HTMLElement {
 
   // Subclasses, extensions and tests may want to mess with this method to
   // manipulate the content that is about the get used.
-  public beforeReplaceContent(content: DocumentFragment): DocumentFragment {
+  beforeReplaceContent(content: DocumentFragment): DocumentFragment {
     return content;
   }
 
   // Subclasses, extensions and tests may want to mess with this method to
   // change how content gets replaced by new content.
-  public replaceContent(newContent: DocumentFragment): void {
+  replaceContent(newContent: DocumentFragment): void {
     this.innerHTML = "";
     this.append(newContent);
   }
 
-  private async load(): Promise<PromiseResponse[] | undefined> {
+  async #load(): Promise<PromiseResponse[] | undefined> {
     this.#state = "loading";
     this.dispatchEvent(new Event("importstart", { bubbles: true }));
     // this.#abortController may be replaced while the load function is in the
@@ -276,10 +269,10 @@ class HTMLImportElement extends HTMLElement {
         this.querySelectorAll<HTMLImportElement>("html-import")
       );
       const result = [{ element: this, title: imported.title }, ...nested];
-      this.setDone(result, abortController);
+      this.#setDone(result, abortController);
       return result;
     } catch (error) {
-      this.setFail(String(error), abortController);
+      this.#setFail(String(error), abortController);
     }
   }
 
