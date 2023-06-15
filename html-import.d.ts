@@ -1,4 +1,4 @@
-declare type PromiseResponse = {
+type PromiseResponse = {
     element: HTMLHTMLImportElement;
     title: string;
 };
@@ -26,7 +26,4 @@ declare class HTMLHTMLImportElement extends HTMLElement {
     get selector(): string;
     set selector(value: string);
 }
-declare const HTMLHTMLImportElementWithEvents_base: import("@sirpepe/oneventmixin").ExtendCtor<typeof HTMLHTMLImportElement, "importdone" | "importabort" | "importstart">;
-declare class HTMLHTMLImportElementWithEvents extends HTMLHTMLImportElementWithEvents_base {
-}
-export { HTMLHTMLImportElementWithEvents as default };
+export { HTMLHTMLImportElement as default };

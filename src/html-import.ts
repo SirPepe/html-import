@@ -1,5 +1,3 @@
-import OnEventMixin from "@sirpepe/oneventmixin";
-
 type PromiseResponse = {
   element: HTMLHTMLImportElement;
   title: string;
@@ -338,11 +336,6 @@ class HTMLHTMLImportElement extends HTMLElement {
   }
 }
 
-class HTMLHTMLImportElementWithEvents extends OnEventMixin(
-  HTMLHTMLImportElement,
-  ["importstart", "importdone", "importdone", "importabort"]
-) {}
+export { HTMLHTMLImportElement as default };
 
-export { HTMLHTMLImportElementWithEvents as default };
-
-window.customElements.define("html-import", HTMLHTMLImportElementWithEvents);
+window.customElements.define("html-import", HTMLHTMLImportElement);

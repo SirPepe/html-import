@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.14.5",
-    "@sirpepe/oneventmixin": "0.0.3",
     "core-js": "^3.14.0"
   }
 }
