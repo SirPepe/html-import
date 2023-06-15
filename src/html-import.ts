@@ -8,20 +8,6 @@ type FulfillmentCallbacks = [
   Reject: (reason: any) => any
 ];
 
-let link: HTMLAnchorElement;
-function absoluteUrl(href: string): string {
-  link = link || document.createElement("a");
-  link.href = href;
-  return link.href;
-}
-
-function $<T extends Element>(
-  target: Element | Document | DocumentFragment,
-  selector: string
-): NodeListOf<T> {
-  return target.querySelectorAll(selector);
-}
-
 function warn(...args: any[]): void {
   if (window.console) {
     if (typeof window.console.warn === "function") {
@@ -48,13 +34,6 @@ function insertAfter(target: Element, content: Node): void {
       target.parentNode.append(content);
     }
   }
-}
-
-function matchAncestor(element: Element, selector: string): Element | null {
-  if (!element.parentElement) {
-    return null;
-  }
-  return element.parentElement.closest(selector);
 }
 
 // Fixing scripts is required because Firefox (rightly) treats scripts that are
@@ -117,14 +96,14 @@ function extractContent(
       content.append(window.document.adoptNode(source.body.childNodes[0]));
     }
   } else if (selector && !hash) {
-    const matchingDescendants = $(source, selector);
+    const matchingDescendants = source.querySelectorAll(selector);
     for (const descendant of matchingDescendants) {
-      if (!matchAncestor(descendant, selector)) {
+      if (!descendant?.parentElement?.closest(selector)) {
         content.append(window.document.adoptNode(descendant));
       }
     }
   } else {
-    const hashMatch = $(source, hash)[0];
+    const hashMatch = source.querySelector(hash);
     if (hashMatch && (!selector || hashMatch.matches(selector))) {
       content.append(hashMatch);
     }
@@ -294,7 +273,7 @@ class HTMLHTMLImportElement extends HTMLElement {
       fixScripts(imported.content, this.src, this.verbose);
       this.replaceContent(this.beforeReplaceContent(imported.content));
       const nested = await awaitNested(
-        $<HTMLHTMLImportElement>(this, "html-import")
+        this.querySelectorAll<HTMLHTMLImportElement>("html-import")
       );
       const result = [{ element: this, title: imported.title }, ...nested];
       this.setDone(result, abortController);
@@ -318,7 +297,7 @@ class HTMLHTMLImportElement extends HTMLElement {
   get src(): string {
     const src = this.getAttribute("src") || "";
     if (src) {
-      return absoluteUrl(src);
+      return new URL(src, window.location.href).toString();
     }
     return "";
   }
