@@ -5,7 +5,7 @@
 <script src="../../dist/min/html-import.min.js"></script>
 <script>
   window.customElements.whenDefined("html-import").then(() => {
-    window.HTMLHTMLImportElement.prototype.replaceContent = function(newContent) {
+    window.HTMLImportElement.prototype.replaceContent = function(newContent) {
       if (!this.shadowRoot) {
         this.shadowRoot = this.attachShadow({ mode: "open" });
       } else {
