@@ -1,5 +1,5 @@
 type PromiseResponse = {
-  element: HTMLHTMLImportElement;
+  element: HTMLImportElement;
   title: string;
 };
 
@@ -67,7 +67,7 @@ function fixScripts(
 }
 
 async function awaitNested(
-  imports: Iterable<HTMLHTMLImportElement>
+  imports: Iterable<HTMLImportElement>
 ): Promise<PromiseResponse[]> {
   const promises: Promise<PromiseResponse[]>[] = [];
   for (const importElement of imports) {
@@ -111,7 +111,7 @@ function extractContent(
   return { content, title: source.title };
 }
 
-class HTMLHTMLImportElement extends HTMLElement {
+class HTMLImportElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
   // current operation - AbortController is single-use anyway and so has to be
   // replaced for each request.
@@ -273,7 +273,7 @@ class HTMLHTMLImportElement extends HTMLElement {
       fixScripts(imported.content, this.src, this.verbose);
       this.replaceContent(this.beforeReplaceContent(imported.content));
       const nested = await awaitNested(
-        this.querySelectorAll<HTMLHTMLImportElement>("html-import")
+        this.querySelectorAll<HTMLImportElement>("html-import")
       );
       const result = [{ element: this, title: imported.title }, ...nested];
       this.setDone(result, abortController);
@@ -315,6 +315,6 @@ class HTMLHTMLImportElement extends HTMLElement {
   }
 }
 
-export { HTMLHTMLImportElement as default };
+export { HTMLImportElement as default };
 
-window.customElements.define("html-import", HTMLHTMLImportElement);
+window.customElements.define("html-import", HTMLImportElement);
