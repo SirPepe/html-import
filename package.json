@@ -1,7 +1,7 @@
 {
   "name": "@sirpepe/html-import",
   "version": "2.1.0",
-  "description": "Custom element that works like include() in PHP or #include in C, but for HTML",
+  "description": "Custom element to import (parts of) HTML documents into other documents",
   "main": "dist/min/html-import.min.js",
   "module": "dist/esm/html-import.js",
   "browser": "dist/min/html-import.min.js",
