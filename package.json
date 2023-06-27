@@ -1,6 +1,6 @@
 {
   "name": "@sirpepe/html-import",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Custom element to import (parts of) HTML documents into other documents",
   "main": "dist/min/html-import.min.js",
   "module": "dist/esm/html-import.js",
