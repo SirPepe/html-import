@@ -1,6 +1,19 @@
-# Licenses
+Copyright (c) 2023 Peter Kröner, peter@peterkroener.de
 
-`<html-import>` available under two different licenses depending on how you plan to use it:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-* For **open-source** projects the [GPLv3 license](https://opensource.org/licenses/gpl-3.0.html) applies. You can download `<html-import>` and do with it what you want, as long as derivative work is licensed under an equivalent license.
-* If you want to use `<html-import>` for **commercial/closed source** projects [just talk to me](https://www.peterkroener.de/kontakt/) and we can figure something out. I'll probably grant you a free license with no strings attached if you ask nicely.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,7 +1,16 @@
-import OnEventMixin from "@sirpepe/oneventmixin";
+import {
+  define,
+  attr,
+  href,
+  string,
+  reactive,
+  event,
+} from "@sirpepe/schleifchen";
+
+type Handler<E extends Event> = ((evt: E) => void) | null;
 
 type PromiseResponse = {
-  element: HTMLHTMLImportElement;
+  element: HTMLImportElement;
   title: string;
 };
 
@@ -10,36 +19,35 @@ type FulfillmentCallbacks = [
   Reject: (reason: any) => any
 ];
 
-let link: HTMLAnchorElement;
-function absoluteUrl(href: string): string {
-  link = link || document.createElement("a");
-  link.href = href;
-  return link.href;
-}
-
-function $<T extends Element>(
-  target: Element | Document | DocumentFragment,
-  selector: string
-): NodeListOf<T> {
-  return target.querySelectorAll(selector);
-}
-
-function warn(...args: any[]): void {
-  if (window.console) {
-    if (typeof window.console.warn === "function") {
-      window.console.warn(...args);
-    } else if (typeof window.console.log === "function") {
-      window.console.log(...args);
-    }
+class ImportStartEvent extends Event {
+  constructor() {
+    super("importstart", { bubbles: true });
   }
 }
 
-function isAsyncByDesign(script: HTMLScriptElement): boolean {
-  return (
-    script.hasAttribute("async") ||
-    script.hasAttribute("defer") ||
-    script.getAttribute("type") === "module"
-  );
+class ImportDoneEvent extends Event {
+  constructor() {
+    super("importdone", { bubbles: true });
+  }
+}
+
+class ImportAbortEvent extends Event {
+  constructor() {
+    super("importabort", { bubbles: true });
+  }
+}
+
+class ImportFailEvent extends Event {
+  #reason: any;
+
+  constructor(reason: any) {
+    super("importfail", { bubbles: true });
+    this.#reason = reason;
+  }
+
+  get reason(): any {
+    return this.#reason;
+  }
 }
 
 function insertAfter(target: Element, content: Node): void {
@@ -52,33 +60,15 @@ function insertAfter(target: Element, content: Node): void {
   }
 }
 
-function matchAncestor(element: Element, selector: string): Element | null {
-  if (!element.parentElement) {
-    return null;
-  }
-  return element.parentElement.closest(selector);
-}
-
 // Fixing scripts is required because Firefox (rightly) treats scripts that are
 // cloned or adopted from other documents as suspicious and won't run them. So
 // we have to _manually_ clone the scripts and copy the original's content and
 // attributes over to the clones, because that's not suspicious at all. This
 // must happen in all browsers for the sake of consistency. Importing scripts
-// turns them asynchronous, so we issue a warning if the scripts were not
-// originally meant to execute asynchronously. Also screw TypeScript for having
-// Attr extend Node, but also having Node.cloneNode() return Node.
-function fixScripts(
-  context: DocumentFragment,
-  sourceUrl: string,
-  verbose: boolean
-): void {
+// turns them asynchronous
+function fixScripts(context: DocumentFragment): void {
   const scripts = context.querySelectorAll("script");
   for (const script of scripts) {
-    if (verbose && !isAsyncByDesign(script)) {
-      warn(
-        `An formerly blocking script in ${sourceUrl} has been imported by html-import and is now executing asynchronously`
-      );
-    }
     const clone = document.createElement("script");
     clone.text = script.text;
     for (const attribute of script.attributes) {
@@ -90,11 +80,11 @@ function fixScripts(
 }
 
 async function awaitNested(
-  imports: Iterable<HTMLHTMLImportElement>
+  imports: Iterable<HTMLImportElement>
 ): Promise<PromiseResponse[]> {
   const promises: Promise<PromiseResponse[]>[] = [];
   for (const importElement of imports) {
-    promises.push(importElement.done);
+    promises.push(importElement.done());
   }
   const responses = await Promise.all(promises);
   return responses.flat();
@@ -119,14 +109,14 @@ function extractContent(
       content.append(window.document.adoptNode(source.body.childNodes[0]));
     }
   } else if (selector && !hash) {
-    const matchingDescendants = $(source, selector);
+    const matchingDescendants = source.querySelectorAll(selector);
     for (const descendant of matchingDescendants) {
-      if (!matchAncestor(descendant, selector)) {
+      if (!descendant?.parentElement?.closest(selector)) {
         content.append(window.document.adoptNode(descendant));
       }
     }
   } else {
-    const hashMatch = $(source, hash)[0];
+    const hashMatch = source.querySelector(hash); // basically getELementById()
     if (hashMatch && (!selector || hashMatch.matches(selector))) {
       content.append(hashMatch);
     }
@@ -134,27 +124,28 @@ function extractContent(
   return { content, title: source.title };
 }
 
-class HTMLHTMLImportElement extends HTMLElement {
+@define("html-import")
+class HTMLImportElement extends HTMLElement {
   // Aborts running downloads and also serves as the object symbolizing the
-  // current operation - AbortController is single-use anyway and so has to be
-  // replaced for each request.
-  #abortController = new AbortController();
+  // current loading operation - AbortController is single-use anyway and so has
+  // to be replaced for each request.
+  #controller = new AbortController();
 
-  // Internal state management, used to decide if the AbortController needs to
-  // be used when a new request happens.
-  #state: "loading" | "done" | "fail" | "none" = "none";
+  // Promise fulfillment triggers, registered via done()
+  #callbacks: FulfillmentCallbacks[] = [];
 
-  // Promise fulfillment triggers mapped by the AbortController that was in use
-  // when they were registered (using the AbortController as a stand-in for the
-  // then-current operation)
-  #callbacks: WeakMap<AbortController, FulfillmentCallbacks[]> = new WeakMap();
+  // Internal state management. If a new request happens while the state is
+  // "loading", the AbortController needs to be used to stop the previous
+  // download.
+  #state: "loading" | "done" | "fail" | "ready" = "ready";
 
-  // Used to debounce attribute updates, which for some reason are NOT batched
-  // for custom elements (in contrast to attribute changes in MutationObserver).
-  #updateTimeout: NodeJS.Timeout | undefined = undefined;
-
-  // Can be set to false to silence the console reporting on async scrips
-  verbose = true;
+  // Public attributes
+  @attr(href()) accessor src = "";
+  @attr(string()) accessor selector = "";
+  @attr(event()) accessor onimportstart: Handler<ImportStartEvent> = null;
+  @attr(event()) accessor onimportdone: Handler<ImportDoneEvent> = null;
+  @attr(event()) accessor onimportabort: Handler<ImportAbortEvent> = null;
+  @attr(event()) accessor onimportfail: Handler<ImportFailEvent> = null;
 
   constructor(src?: string, selector?: string) {
     super();
@@ -164,101 +155,61 @@ class HTMLHTMLImportElement extends HTMLElement {
     if (selector) {
       this.selector = selector;
     }
-    this.#state = "none";
   }
 
-  private reset(): void {
-    if (this.#updateTimeout) {
-      clearTimeout(this.#updateTimeout);
-    }
+  // Reset the current loading operation, if any. Abort the fetch request, fire
+  // an abort error, but keep the current callbacks alive.
+  #setBack(): void {
     if (this.#state === "loading") {
-      this.#abortController.abort();
+      this.#controller.abort();
+      this.#controller = new AbortController();
+      this.dispatchEvent(new ImportAbortEvent());
     }
-    // Only replace the current AbortController if it was either used in the
-    // previous block or if there are any triggers currently attached. This
-    // keeps promises alive, for which no loading process ever started.
-    const triggers = this.#callbacks.get(this.#abortController) || [];
-    if (this.#state === "loading" || triggers.length > 0) {
-      this.#abortController = new AbortController();
-    }
-    this.#state = "none";
+    this.#state = "ready";
   }
 
-  private setDone(
-    entries: PromiseResponse[],
-    controller: AbortController
-  ): void {
-    const callbacks = this.#callbacks.get(controller) || [];
-    this.dispatchEvent(new Event("importdone", { bubbles: true }));
+  // End the current loading operation as a success. Fire a "done" event, then
+  // trigger and re-set the success callbacks
+  #setDone(entries: PromiseResponse[]): void {
+    this.dispatchEvent(new ImportDoneEvent());
+    this.#callbacks.forEach(([resolve]) => resolve(entries));
+    this.#callbacks = [];
     this.#state = "done";
-    callbacks.forEach(([resolve]) => resolve(entries));
   }
 
-  // A special case of failure is the AbortError which is not really a "failure"
-  // but rather a orderly reset/shutdown.
-  private setFail(reason: any, controller: AbortController): void {
-    const callbacks = this.#callbacks.get(controller) || [];
-    if (reason.startsWith("AbortError")) {
-      this.dispatchEvent(new Event("importabort", { bubbles: true }));
-      this.#state = "none";
-    } else {
-      this.dispatchEvent(
-        new CustomEvent("importfail", { bubbles: true, detail: reason })
-      );
-      this.#state = "fail";
-      callbacks.forEach(([, reject]) => reject(reason));
-    }
+  // End the current loading operation as a failure
+  #setFail(reason: any): void {
+    this.dispatchEvent(new ImportFailEvent(reason));
+    this.#callbacks.forEach(([, reject]) => reject(reason));
+    this.#callbacks = [];
+    this.#state = "fail";
   }
 
-  public get [Symbol.toStringTag](): string {
-    return "HTMLHTMLImportElement";
+  get [Symbol.toStringTag](): string {
+    return "HTMLImportElement";
   }
 
-  static get observedAttributes(): string[] {
-    return ["src", "selector"];
-  }
-
-  private connectedCallback() {
-    this.import();
-  }
-
-  private disconnectedCallback() {
-    this.reset();
-  }
-
-  private attributeChangedCallback(
-    name: string,
-    oldValue: any,
-    newValue: any
-  ): void {
-    if ((name === "src" || name === "selector") && oldValue !== newValue) {
-      this.import();
-    }
-  }
-
-  // Public method to trigger re-loads without changing src or selector
-  public async reload(): Promise<PromiseResponse[]> {
-    this.reset();
+  // Manually triggers a reload without changing src or selector
+  async reload(): Promise<PromiseResponse[]> {
+    this.#setBack();
     if (!this.src) {
       return [];
     }
-    return (await this.load()) ?? [];
+    return (await this.#load()) ?? [];
   }
 
-  // Triggered when anything happens that requires a (re-)import, but debounces
-  // the actual load process, mainly because attribute changes on custom
-  // elements are, in contrast to mutation observers, not batched.
-  private import(): void {
-    this.reset();
+  @reactive({ keys: ["src", "selector"] })
+  #import(): void {
+    this.#setBack();
     if (!this.src) {
       return;
     }
-    this.#updateTimeout = setTimeout(() => this.load(), 0);
+    this.#load();
   }
 
   // Subclasses, extensions and tests may want to mess with this method to
   // implement their own loading logic.
-  public async fetch(url: string, signal: AbortSignal): Promise<string> {
+  async fetch(url: string, signal: AbortSignal): Promise<string> {
     const response = await window.fetch(url, { signal });
     if (response.ok) {
       return await response.text();
@@ -269,80 +220,53 @@ class HTMLHTMLImportElement extends HTMLElement {
 
   // Subclasses, extensions and tests may want to mess with this method to
   // manipulate the content that is about the get used.
-  public beforeReplaceContent(content: DocumentFragment): DocumentFragment {
+  beforeReplaceContent(content: DocumentFragment): DocumentFragment {
     return content;
   }
 
   // Subclasses, extensions and tests may want to mess with this method to
   // change how content gets replaced by new content.
-  public replaceContent(newContent: DocumentFragment): void {
+  replaceContent(newContent: DocumentFragment): void {
     this.innerHTML = "";
     this.append(newContent);
   }
 
-  private async load(): Promise<PromiseResponse[] | undefined> {
+  async #load(): Promise<PromiseResponse[] | undefined> {
+    const src = this.src;
     this.#state = "loading";
-    this.dispatchEvent(new Event("importstart", { bubbles: true }));
+    this.dispatchEvent(new ImportStartEvent());
     // this.#abortController may be replaced while the load function is in the
     // middle of its job. We need this reference to keep access the relevant
     // promise triggers for when the operation completes.
-    const abortController = this.#abortController;
     try {
       const imported = extractContent(
-        await this.fetch(this.src, abortController.signal),
+        await this.fetch(src, this.#controller.signal),
         this.selector,
-        new URL(this.src).hash
+        new URL(src, window.location.origin).hash
       );
-      fixScripts(imported.content, this.src, this.verbose);
+      fixScripts(imported.content);
       this.replaceContent(this.beforeReplaceContent(imported.content));
-      const nested = await awaitNested(
-        $<HTMLHTMLImportElement>(this, "html-import")
-      );
+      const nested = await awaitNested(this.querySelectorAll("html-import"));
       const result = [{ element: this, title: imported.title }, ...nested];
-      this.setDone(result, abortController);
+      this.#setDone(result);
       return result;
     } catch (error) {
-      this.setFail(String(error), abortController);
-    }
-  }
-
-  get done(): Promise<PromiseResponse[]> {
-    return new Promise((resolve, reject) => {
-      const callbacks = this.#callbacks.get(this.#abortController);
-      if (callbacks) {
-        callbacks.push([resolve, reject]);
-      } else {
-        this.#callbacks.set(this.#abortController, [[resolve, reject]]);
+      // Ignore abort "errors"
+      if (!String(error).startsWith("AbortError")) {
+        this.#setFail(`${String(error)} (${src})`);
       }
-    });
-  }
-
-  get src(): string {
-    const src = this.getAttribute("src") || "";
-    if (src) {
-      return absoluteUrl(src);
     }
-    return "";
   }
 
-  set src(value: string) {
-    this.setAttribute("src", value);
-  }
-
-  get selector(): string {
-    return this.getAttribute("selector") || "";
-  }
-
-  set selector(value: string) {
-    this.setAttribute("selector", value);
+  done(): Promise<PromiseResponse[]> {
+    return new Promise((...callbacks) => this.#callbacks.push(callbacks));
   }
 }
 
-class HTMLHTMLImportElementWithEvents extends OnEventMixin(
-  HTMLHTMLImportElement,
-  ["importstart", "importdone", "importdone", "importabort"]
-) {}
+export default HTMLImportElement;
 
-export { HTMLHTMLImportElementWithEvents as default };
-
-window.customElements.define("html-import", HTMLHTMLImportElementWithEvents);
+declare global {
+  interface HTMLElementTagNameMap {
+    "html-import": HTMLImportElement;
+  }
+}
