@@ -50,24 +50,6 @@ class ImportFailEvent extends Event {
   }
 }
 
-function warn(...args: any[]): void {
-  if (window.console) {
-    if (typeof window.console.warn === "function") {
-      window.console.warn(...args);
-    } else if (typeof window.console.log === "function") {
-      window.console.log(...args);
-    }
-  }
-}
-
-function isAsyncByDesign(script: HTMLScriptElement): boolean {
-  return (
-    script.hasAttribute("async") ||
-    script.hasAttribute("defer") ||
-    script.getAttribute("type") === "module"
-  );
-}
-
 function insertAfter(target: Element, content: Node): void {
   if (target.parentNode) {
     if (target.nextElementSibling) {
@@ -83,21 +65,10 @@ function insertAfter(target: Element, content: Node): void {
 // we have to _manually_ clone the scripts and copy the original's content and
 // attributes over to the clones, because that's not suspicious at all. This
 // must happen in all browsers for the sake of consistency. Importing scripts
-// turns them asynchronous, so we issue a warning if the scripts were not
-// originally meant to execute asynchronously. Also screw TypeScript for having
-// Attr extend Node, but also having Node.cloneNode() return Node.
-function fixScripts(
-  context: DocumentFragment,
-  sourceUrl: string,
-  verbose: boolean
-): void {
+// turns them asynchronous
+function fixScripts(context: DocumentFragment): void {
   const scripts = context.querySelectorAll("script");
   for (const script of scripts) {
-    if (verbose && !isAsyncByDesign(script)) {
-      warn(
-        `An formerly blocking script in ${sourceUrl} has been imported by html-import and is now executing asynchronously`
-      );
-    }
     const clone = document.createElement("script");
     clone.text = script.text;
     for (const attribute of script.attributes) {
@@ -167,9 +138,6 @@ class HTMLImportElement extends HTMLElement {
   // "loading", the AbortController needs to be used to stop the previous
   // download.
   #state: "loading" | "done" | "fail" | "ready" = "ready";
-
-  // Set to true to enable reporting on async scrips
-  verbose = false;
 
   // Public attributes
   @attr(href()) accessor src = "";
@@ -276,7 +244,7 @@ class HTMLImportElement extends HTMLElement {
         this.selector,
         new URL(src, window.location.origin).hash
       );
-      fixScripts(imported.content, this.src, this.verbose);
+      fixScripts(imported.content);
       this.replaceContent(this.beforeReplaceContent(imported.content));
       const nested = await awaitNested(this.querySelectorAll("html-import"));
       const result = [{ element: this, title: imported.title }, ...nested];
