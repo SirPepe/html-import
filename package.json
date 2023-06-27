@@ -10,7 +10,7 @@
     "build": "rollup -c",
     "types": "tsc -p tsconfig.build.json",
     "lint": "eslint src",
-    "test": "web-test-runner test/**/*.test.ts --node-resolve",
+    "test": "web-test-runner test/**/*.test.ts --node-resolve --playwright --browsers chromium firefox",
     "prepareRelease": "rm -rf node_modules && npm install && npm run build && npm run types && npm run test",
     "release": "npm run prepareRelease && release-it"
   },
@@ -41,6 +41,7 @@
     "@typescript-eslint/parser": "^5.0.0",
     "@web/dev-server-rollup": "^0.5.1",
     "@web/test-runner": "^0.16.1",
+    "@web/test-runner-playwright": "^0.10.1",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
