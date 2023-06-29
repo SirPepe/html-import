@@ -40,7 +40,7 @@ function goTo(href) {
     activeNavLink = navLinks[site];
     activeNavLink.classList.add("active");
     importElement.src = site;
-    importElement.done.then(([{ title }]) => {
+    importElement.done().then(([{ title }]) => {
       window.document.title = title;
       loaderElement.setAttribute("hidden", "hidden");
       scrollTo(hash);
