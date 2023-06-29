@@ -7,6 +7,8 @@ import {
   event,
 } from "@sirpepe/schleifchen";
 
+type State = "loading" | "done" | "fail" | "ready";
+
 type Handler<E extends Event> = ((evt: E) => void) | null;
 
 type PromiseResponse = {
@@ -137,7 +139,7 @@ class HTMLImportElement extends HTMLElement {
   // Internal state management. If a new request happens while the state is
   // "loading", the AbortController needs to be used to stop the previous
   // download.
-  #state: "loading" | "done" | "fail" | "ready" = "ready";
+  #state: State = "ready";
 
   // Public attributes
   @attr(href()) accessor src = "";
@@ -260,6 +262,10 @@ class HTMLImportElement extends HTMLElement {
 
   done(): Promise<PromiseResponse[]> {
     return new Promise((...callbacks) => this.#callbacks.push(callbacks));
+  }
+
+  get state(): State {
+    return this.#state;
   }
 }
 

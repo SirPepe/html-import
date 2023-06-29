@@ -142,10 +142,11 @@ element.done.then( (data) => {
 
 #### Properties
 
-`HTMLImportElement` implements seven DOM properties:
+`HTMLImportElement` implements eight DOM properties:
 
 * `src` reflects the `src` content attribute. Can be used as a setter to change the `src` value. As a getter, it always returns absolute URLs, even when the HTML attribute is relative (just like a `<a>` element's `href` attribute). Returns the empty string when there's no `src` set.
 * `selector` reflects the `selector` content attribute. Can be used as a setter to change the `selector` value.
+* `state` returns one of `"loading"`, `"done"`, `"fail"` and "ready"`, indicating the element's loading state
 * `onstart`, `ondone`, `onfail` and `onabort` event handlers
 
 Note that the internal loading mechanism for `<html-import>` batches attribute

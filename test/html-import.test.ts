@@ -41,13 +41,19 @@ describe("use via constructor", () => {
     expect(new HTMLImportElement("").src).to.equal("");
   });
 
+  it("initializes in 'ready' state", () => {
+    expect(new HTMLImportElement().state).to.equal("ready");
+  });
+
   it("imports a whole file", async () => {
     const element = new HTMLImportElement("test/resources/content.html");
+    expect(element.state).to.equal("loading");
     element.innerHTML = "This goes away";
     expect(element.toString()).to.equal("[object HTMLImportElement]");
     expect(element.done().toString()).to.equal("[object Promise]");
     fixture.append(element);
     await element.done();
+    expect(element.state).to.equal("done");
     expect(element.innerHTML).to.equal(
       `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
     );
@@ -223,6 +229,7 @@ describe("JS API", () => {
     element.done().then(thenCallback, catchCallback);
     element.addEventListener("importfail", eventCallback);
     await element.done().catch(() => {}); // eslint-disable-line
+    expect(element.state).to.equal("fail");
     expect(thenCallback.callCount).to.equal(0);
     expect(catchCallback.callCount).to.equal(1);
     expect(eventCallback.callCount).to.equal(1);
