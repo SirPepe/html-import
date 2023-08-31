@@ -1,11 +1,4 @@
-import {
-  define,
-  attr,
-  href,
-  string,
-  reactive,
-  event,
-} from "@sirpepe/schleifchen";
+import { define, attr, href, string, reactive, event } from "@sirpepe/ornament";
 
 type State = "loading" | "done" | "fail" | "ready";
 
