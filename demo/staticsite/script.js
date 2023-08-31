@@ -34,20 +34,17 @@ function goTo(href) {
   const parsed = new URL(href);
   const hash = parsed.hash;
   const site = parsed.origin + parsed.pathname;
-  if (site !== importElement.src) {
-    loaderElement.removeAttribute("hidden");
-    activeNavLink.classList.remove("active");
-    activeNavLink = navLinks[site];
-    activeNavLink.classList.add("active");
-    importElement.src = site;
-    importElement.done().then(([{ title }]) => {
-      window.document.title = title;
-      loaderElement.setAttribute("hidden", "hidden");
-      scrollTo(hash);
-    });
-  } else {
+  loaderElement.removeAttribute("hidden");
+  activeNavLink.classList.remove("active");
+  activeNavLink = navLinks[site];
+  activeNavLink.classList.add("active");
+  importElement.src = site;
+  console.log("Load", site);
+  importElement.done().then(([{ title }]) => {
+    window.document.title = title;
+    loaderElement.setAttribute("hidden", "hidden");
     scrollTo(hash);
-  }
+  });
 }
 
 window.addEventListener("popstate", ({ state }) => {
