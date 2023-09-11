@@ -80,6 +80,28 @@ describe("use via constructor", () => {
     expect(element.innerHTML).to.equal(`<p id="lorem">Lorem</p>`);
   });
 
+  it("imports only elements matching the selector, with :not()", async () => {
+    const element = new HTMLImportElement(
+      "test/resources/content.html",
+      "p:not(#ipsum)",
+    );
+    element.innerHTML = "This goes away";
+    fixture.append(element);
+    await element.done();
+    expect(element.innerHTML).to.equal(`<p id="lorem">Lorem</p>`);
+  });
+
+  it.only("imports only elements matching the selector, with standalone :not()", async () => {
+    const element = new HTMLImportElement(
+      "test/resources/content.html",
+      ":not(#ipsum)",
+    );
+    element.innerHTML = "This goes away";
+    fixture.append(element);
+    await element.done();
+    expect(element.innerHTML).to.equal(`<p id="lorem">Lorem</p>`);
+  });
+
   it("replaces imported content reactively on src change", async () => {
     const element = new HTMLImportElement("test/resources/content.html");
     element.innerHTML = "This goes away";
