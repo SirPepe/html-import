@@ -11,7 +11,7 @@ type PromiseResponse = {
 
 type FulfillmentCallbacks = [
   Resolve: (entries: PromiseResponse[]) => any,
-  Reject: (reason: any) => any
+  Reject: (reason: any) => any,
 ];
 
 class ImportStartEvent extends Event {
@@ -75,7 +75,7 @@ function fixScripts(context: DocumentFragment): void {
 }
 
 async function awaitNested(
-  imports: Iterable<HTMLImportElement>
+  imports: Iterable<HTMLImportElement>,
 ): Promise<PromiseResponse[]> {
   const promises: Promise<PromiseResponse[]>[] = [];
   for (const importElement of imports) {
@@ -92,7 +92,7 @@ async function awaitNested(
 function extractContent(
   html: string,
   selector: string,
-  hash: string
+  hash: string,
 ): { content: DocumentFragment; title: string } {
   const content = window.document.createDocumentFragment();
   const source = new DOMParser().parseFromString(html, "text/html");
@@ -237,7 +237,7 @@ class HTMLImportElement extends HTMLElement {
       const imported = extractContent(
         await this.fetch(src, this.#controller.signal),
         this.selector,
-        new URL(src, window.location.origin).hash
+        new URL(src, window.location.origin).hash,
       );
       fixScripts(imported.content);
       this.replaceContent(this.beforeReplaceContent(imported.content));

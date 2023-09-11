@@ -53,6 +53,6 @@
     "typescript": "^5.1.0"
   },
   "dependencies": {
-    "@sirpepe/ornament": "^0.0.3"
+    "@sirpepe/ornament": "^0.0.5"
   }
 }

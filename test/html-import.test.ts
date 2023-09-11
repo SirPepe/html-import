@@ -10,7 +10,7 @@ const originalFetch = HTMLImportElement.prototype.fetch;
 HTMLImportElement.prototype.fetch = async function fetch(
   this: HTMLImportElement,
   url: string,
-  signal: AbortSignal
+  signal: AbortSignal,
 ): Promise<any> {
   await wait(100);
   return await originalFetch.call(this, url, signal);
@@ -20,7 +20,7 @@ HTMLImportElement.prototype.fetch = async function fetch(
 function cleanupHTML(html: string): string {
   return html.replaceAll(
     `<!-- injected by web-dev-server -->\n<script type="module" src="/__web-dev-server__web-socket.js"></script>`,
-    ""
+    "",
   );
 }
 
@@ -55,7 +55,7 @@ describe("use via constructor", () => {
     await element.done();
     expect(element.state).to.equal("done");
     expect(element.innerHTML).to.equal(
-      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
+      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`,
     );
   });
 
@@ -65,14 +65,14 @@ describe("use via constructor", () => {
     fixture.append(element);
     await element.done();
     expect(element.innerHTML).to.equal(
-      `<p id="lorem"><span class="foo">Lorem</span></p>`
+      `<p id="lorem"><span class="foo">Lorem</span></p>`,
     );
   });
 
   it("imports only elements matching the selector", async () => {
     const element = new HTMLImportElement(
       "test/resources/content.html",
-      "#lorem"
+      "#lorem",
     );
     element.innerHTML = "This goes away";
     fixture.append(element);
@@ -86,7 +86,7 @@ describe("use via constructor", () => {
     fixture.append(element);
     await element.done();
     expect(element.innerHTML).to.equal(
-      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
+      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`,
     );
     element.src = "test/resources/content2.html";
     await element.done();
@@ -96,7 +96,7 @@ describe("use via constructor", () => {
   it("replaces imported content reactively on selector change", async () => {
     const element = new HTMLImportElement(
       "test/resources/content.html",
-      "#lorem"
+      "#lorem",
     );
     fixture.append(element);
     await element.done();
@@ -109,7 +109,7 @@ describe("use via constructor", () => {
   it("Does not reload when event handlers change", async () => {
     const element = new HTMLImportElement(
       "test/resources/content.html",
-      "#lorem"
+      "#lorem",
     );
     fixture.append(element);
     await element.done();
@@ -129,7 +129,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/content.html"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`
+      `<p id="lorem">Lorem</p>\n<p id="ipsum">Ipsum</p>\n`,
     );
   });
 
@@ -137,7 +137,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/contentWithText.html"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `Hello\n<p id="lorem">Lorem</p>\nWorld\n<p id="ipsum">Ipsum</p>\n`
+      `Hello\n<p id="lorem">Lorem</p>\nWorld\n<p id="ipsum">Ipsum</p>\n`,
     );
   });
 
@@ -145,7 +145,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/content.html#ipsum"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p id="ipsum">Ipsum</p>`
+      `<p id="ipsum">Ipsum</p>`,
     );
   });
 
@@ -153,7 +153,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/content.html" selector="#ipsum"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p id="ipsum">Ipsum</p>`
+      `<p id="ipsum">Ipsum</p>`,
     );
   });
 
@@ -161,7 +161,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/content.html#ipsum" selector="#ipsum"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p id="ipsum">Ipsum</p>`
+      `<p id="ipsum">Ipsum</p>`,
     );
   });
 
@@ -169,7 +169,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/content.html#ipsum" selector="p"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p id="ipsum">Ipsum</p>`
+      `<p id="ipsum">Ipsum</p>`,
     );
   });
 
@@ -177,7 +177,7 @@ describe("use via innerHTML", () => {
     fixture.innerHTML = `<html-import src="test/resources/nestedContent.html" selector=".foo"></html-import>`;
     await fixture.querySelector("html-import")?.done();
     expect(fixture.querySelector("html-import")?.innerHTML).to.equal(
-      `<p class="foo"><span class="foo">Lorem</span></p>`
+      `<p class="foo"><span class="foo">Lorem</span></p>`,
     );
   });
 });
@@ -296,7 +296,7 @@ describe("scripts", () => {
 
   it("executes imported scripts", async () => {
     const element = new HTMLImportElement(
-      "test/resources/scriptedContent.html"
+      "test/resources/scriptedContent.html",
     );
     fixture.append(element);
     await element.done();
@@ -305,7 +305,7 @@ describe("scripts", () => {
 
   it("executes imported scripts nested in other elements", async () => {
     const element = new HTMLImportElement(
-      "test/resources/scriptedContentNested.html"
+      "test/resources/scriptedContentNested.html",
     );
     fixture.append(element);
     await element.done();
@@ -314,7 +314,7 @@ describe("scripts", () => {
 
   it("eventually executes linked imported scripts", async () => {
     const element = new HTMLImportElement(
-      "test/resources/externalScriptedContent.html"
+      "test/resources/externalScriptedContent.html",
     );
     fixture.append(element);
     await element.done();
@@ -325,7 +325,7 @@ describe("scripts", () => {
   it("does not execute scripts that were not imported", async () => {
     const element = new HTMLImportElement(
       "test/resources/scriptedContent.html",
-      "p"
+      "p",
     );
     fixture.append(element);
     await element.done();
